@@ -13,7 +13,7 @@ const sendVerificationEmail = async(email, verificationToken) => {
         const response = await nodemailerClient.sendMail({
             from: `${sender.name} <${sender.email}>`,
             to: recipient[0].email,
-            subject: 'Verify your email',
+            subject: 'Verify your email — MediSmart',
             html: VERIFICATION_EMAIL_TEMPLATE.replace(
                 '{verificationCode}', verificationToken
             ),
@@ -33,7 +33,7 @@ const sendWelcomeEmail = async (email, name) => {
         await nodemailerClient.sendMail({
             from: `${sender.name} <${sender.email}>`,
             to: email,
-            subject: 'Welcome to Our Platform!',
+            subject: 'Welcome to MediSmart',
             html: emailHTML,
         });
         console.log('Welcome email sent successfully');
@@ -50,7 +50,7 @@ const sendResetPasswordEmail = async (email, resetCode) => {
         const response = await nodemailerClient.sendMail({
             from: `${sender.name} <${sender.email}>`,
             to: recipient[0].email,
-            subject: 'Reset your password',
+            subject: 'Reset your password — MediSmart',
             html: PASSWORD_RESET_REQUEST_TEMPLATE.replace(
                 '{resetCode}', resetCode
             ),
@@ -72,7 +72,7 @@ const sendResetSuccessEmail = async (email) => {
         const response = await nodemailerClient.sendMail({
             from: `${sender.name} <${sender.email}>`,
             to: recipient[0].email,
-            subject: 'Password reset successful',
+            subject: 'Password updated — MediSmart',
             html: PASSWORD_RESET_SUCCESS_TEMPLATE,
             category: 'Password reset'
         })

@@ -68,7 +68,7 @@ const Analytics = () => {
       <div>
         <PageHeader title="Analytics" description="Insights for your clinic area" />
         <div className="admin-card p-6 text-center">
-          <p className="text-xs text-gray-500">Create your area on the Dashboard to view analytics.</p>
+          <p className="text-xs text-gray-500">Complete clinic setup to view analytics.</p>
         </div>
       </div>
     );

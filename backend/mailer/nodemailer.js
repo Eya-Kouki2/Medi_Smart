@@ -5,7 +5,7 @@ dotenv.config();
 
 const sender = {
   email: process.env.EMAIL_USER,
-  name: process.env.EMAIL_NAME,
+  name: process.env.EMAIL_NAME || 'MediSmart',
 };
 
 const nodemailerClient = nodemailer.createTransport({

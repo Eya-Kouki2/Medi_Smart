@@ -1,135 +1,118 @@
-const VERIFICATION_EMAIL_TEMPLATE = `
+const BRAND_NAME = 'MediSmart';
+
+const emailShell = ({ preheader, title, body }) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify Your Email</title>
+  <title>${title}</title>
 </head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(to right, #4CAF50, #45a049); padding: 20px; text-align: center;">
-    <h1 style="color: white; margin: 0;">Verify Your Email</h1>
-  </div>
-  <div style="background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-    <p>Hello,</p>
-    <p>Thank you for signing up! Your verification code is:</p>
-    <div style="text-align: center; margin: 30px 0;">
-      <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #4CAF50;">{verificationCode}</span>
-    </div>
-    <p>Enter this code on the verification page to complete your registration.</p>
-    <p>This code will expire in 15 minutes for security reasons.</p>
-    <p>If you didn't create an account with us, please ignore this email.</p>
-    <p>Best regards,<br>Your App Team</p>
-  </div>
-  <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.8em;">
-    <p>This is an automated message, please do not reply to this email.</p>
-  </div>
+<body style="margin:0;padding:0;background-color:#f0f9fc;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#03045e;line-height:1.6;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">${preheader}</span>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f0f9fc;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #caf0f8;box-shadow:0 12px 40px -18px rgba(3,4,94,0.25);">
+          <tr>
+            <td style="height:4px;background:linear-gradient(90deg,#03045e,#0077b6,#00b4d8);"></td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px 8px;text-align:center;">
+              <div style="display:inline-block;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0077b6,#00b4d8);line-height:44px;font-size:20px;color:#ffffff;">&#9829;</div>
+              <p style="margin:12px 0 0;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#0077b6;">${BRAND_NAME}</p>
+              <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#03045e;">${title}</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 32px 28px;font-size:15px;color:#334155;">
+              ${body}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 32px 24px;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#94a3b8;">This is an automated message from ${BRAND_NAME}. Please do not reply.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
 `;
 
-const WELCOME_EMAIL_TEMPLATE = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome Email</title>
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(to right, #4CAF50, #45a049); padding: 20px; text-align: center;">
-        <h1 style="color: white; margin: 0;">Welcome to As World</h1>
-    </div>
-    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center;">
-        <h2 style="color: #333; margin-top: 0;">Welcome, {name}!</h2>
-        <p style="color: #666;">Thanks for choosing <strong>As World</strong>! We’re happy to have you here.</p>
-        <p style="color: #666;">To get started, click the button below:</p>
-        <div style="margin: 20px 0;">
-            <a href="#" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                Get Started
-            </a>
-        </div>
-        <p style="color: #888; font-size: 0.9em;">If you have any questions, feel free to contact our support team.</p>
-    </div>
-    <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.8em;">
-        <p>This is an automated message, please do not reply to this email.</p>
-        <p><a href="#" style="color: #888; text-decoration: none;">Unsubscribe</a></p>
-    </div>
-</body>
-</html>
+const codeBlock = (code) => `
+<div style="margin:24px 0;text-align:center;">
+  <div style="display:inline-block;padding:16px 28px;border-radius:12px;background:#f0f9fc;border:1px dashed #90e0ef;">
+    <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#0077b6;">${code}</span>
+  </div>
+</div>
 `;
 
-const PASSWORD_RESET_REQUEST_TEMPLATE = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reset Your Password</title>
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(to right, #4CAF50, #45a049); padding: 20px; text-align: center;">
-    <h1 style="color: white; margin: 0;">Password Reset</h1>
-  </div>
-  <div style="background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-    <p>Hello,</p>
-    <p>We received a request to reset your password. If you didn't make this request, please ignore this email.</p>
-    <p>Your password reset code is:</p>
-    <div style="text-align: center; margin: 30px 0;">
-      <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #4CAF50;">{resetCode}</span>
-    </div>
-    <p>Enter this code on the reset password page to choose a new password.</p>
-    <p>This code will expire in 1 hour for security reasons.</p>
-    <p>Best regards,<br>Your App Team</p>
-  </div>
-  <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.8em;">
-    <p>This is an automated message, please do not reply to this email.</p>
-  </div>
-</body>
-</html>
-`;
+const VERIFICATION_EMAIL_TEMPLATE = emailShell({
+  preheader: 'Your MediSmart verification code is ready.',
+  title: 'Verify your email',
+  body: `
+    <p style="margin:0 0 12px;">Hello,</p>
+    <p style="margin:0 0 12px;">Thanks for joining <strong>${BRAND_NAME}</strong>. Use the code below to verify your email and activate your account:</p>
+    ${codeBlock('{verificationCode}')}
+    <p style="margin:0 0 12px;">Enter this code on the verification page to complete your registration.</p>
+    <p style="margin:0;color:#64748b;font-size:13px;">This code expires in 15 minutes. If you did not create an account, you can safely ignore this email.</p>
+    <p style="margin:20px 0 0;">Best regards,<br><strong>The ${BRAND_NAME} Team</strong></p>
+  `,
+});
 
-const PASSWORD_RESET_SUCCESS_TEMPLATE = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Password Reset Successful</title>
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(to right, #4CAF50, #45a049); padding: 20px; text-align: center;">
-    <h1 style="color: white; margin: 0;">Password Reset Successful</h1>
-  </div>
-  <div style="background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-    <p>Hello,</p>
-    <p>We're writing to confirm that your password has been successfully reset.</p>
-    <div style="text-align: center; margin: 30px 0;">
-      <div style="background-color: #4CAF50; color: white; width: 50px; height: 50px; line-height: 50px; border-radius: 50%; display: inline-block; font-size: 30px;">
-        ✓
-      </div>
+const WELCOME_EMAIL_TEMPLATE = emailShell({
+  preheader: 'Welcome to MediSmart — your clinical platform is ready.',
+  title: 'Welcome aboard',
+  body: `
+    <p style="margin:0 0 12px;">Hello <strong>{name}</strong>,</p>
+    <p style="margin:0 0 12px;">Your email has been verified and your <strong>${BRAND_NAME}</strong> account is now active.</p>
+    <p style="margin:0 0 20px;">Sign in to set up your clinic area, invite your team, and start managing patient workflows from one place.</p>
+    <div style="text-align:center;margin:24px 0;">
+      <span style="display:inline-block;padding:12px 24px;border-radius:10px;background:linear-gradient(90deg,#0077b6,#00b4d8);color:#ffffff;font-weight:600;text-decoration:none;">Sign in to ${BRAND_NAME}</span>
     </div>
-    <p>If you did not initiate this password reset, please contact our support team immediately.</p>
-    <p>For security reasons, we recommend that you:</p>
-    <ul>
+    <p style="margin:0;color:#64748b;font-size:13px;">Need help? Contact your system administrator.</p>
+    <p style="margin:20px 0 0;">Best regards,<br><strong>The ${BRAND_NAME} Team</strong></p>
+  `,
+});
+
+const PASSWORD_RESET_REQUEST_TEMPLATE = emailShell({
+  preheader: 'Reset your MediSmart password with this code.',
+  title: 'Reset your password',
+  body: `
+    <p style="margin:0 0 12px;">Hello,</p>
+    <p style="margin:0 0 12px;">We received a request to reset your <strong>${BRAND_NAME}</strong> password. Use the code below to continue:</p>
+    ${codeBlock('{resetCode}')}
+    <p style="margin:0 0 12px;">Enter this code on the password reset page to choose a new password.</p>
+    <p style="margin:0;color:#64748b;font-size:13px;">This code expires in 1 hour. If you did not request a reset, please ignore this email.</p>
+    <p style="margin:20px 0 0;">Best regards,<br><strong>The ${BRAND_NAME} Team</strong></p>
+  `,
+});
+
+const PASSWORD_RESET_SUCCESS_TEMPLATE = emailShell({
+  preheader: 'Your MediSmart password was changed successfully.',
+  title: 'Password updated',
+  body: `
+    <p style="margin:0 0 12px;">Hello,</p>
+    <p style="margin:0 0 12px;">This confirms that your <strong>${BRAND_NAME}</strong> password was changed successfully.</p>
+    <div style="margin:24px 0;text-align:center;">
+      <div style="display:inline-block;width:52px;height:52px;border-radius:50%;background:#0077b6;color:#ffffff;font-size:28px;line-height:52px;">&#10003;</div>
+    </div>
+    <p style="margin:0 0 12px;">If you did not make this change, contact your administrator immediately.</p>
+    <ul style="margin:0 0 12px;padding-left:20px;color:#475569;font-size:14px;">
       <li>Use a strong, unique password</li>
-      <li>Enable two-factor authentication if available</li>
-      <li>Avoid using the same password across multiple sites</li>
+      <li>Never share your login credentials</li>
+      <li>Sign out on shared devices</li>
     </ul>
-    <p>Thank you for helping us keep your account secure.</p>
-    <p>Best regards,<br>Your App Team</p>
-  </div>
-  <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.8em;">
-    <p>This is an automated message, please do not reply to this email.</p>
-  </div>
-</body>
-</html>
-`;
-
+    <p style="margin:20px 0 0;">Best regards,<br><strong>The ${BRAND_NAME} Team</strong></p>
+  `,
+});
 
 module.exports = {
-    VERIFICATION_EMAIL_TEMPLATE,
-    WELCOME_EMAIL_TEMPLATE,
-    PASSWORD_RESET_REQUEST_TEMPLATE,
-    PASSWORD_RESET_SUCCESS_TEMPLATE
+  VERIFICATION_EMAIL_TEMPLATE,
+  WELCOME_EMAIL_TEMPLATE,
+  PASSWORD_RESET_REQUEST_TEMPLATE,
+  PASSWORD_RESET_SUCCESS_TEMPLATE,
 };

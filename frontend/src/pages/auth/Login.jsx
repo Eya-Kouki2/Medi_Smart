@@ -2,7 +2,7 @@ import api from "../../api/axios";
 import { useState } from "react";
 import { FaEnvelope } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { getDashboardPath } from "../../utils/getDashboardPath";
+import { getPostLoginPath } from "../../utils/getDashboardPath";
 import AuthLayout from "../../components/auth/AuthLayout";
 import AuthAlert from "../../components/auth/AuthAlert";
 import AuthInput from "../../components/auth/AuthInput";
@@ -31,7 +31,7 @@ const Login = () => {
     try {
       setIsSubmitting(true);
       const response = await api.post("/api/auth/login", data);
-      navigate(getDashboardPath(response.data.user.role));
+      navigate(getPostLoginPath(response.data.user));
     } catch (error) {
       if (error.response) {
         setErrorMessage(error.response.data.message || "Invalid email or password.");
@@ -99,7 +99,7 @@ const Login = () => {
 
         <p className="auth-footer">
           No account?{" "}
-          <button type="button" onClick={() => navigate("/")} className="auth-btn-link">
+          <button type="button" onClick={() => navigate("/signup")} className="auth-btn-link">
             Sign up
           </button>
         </p>

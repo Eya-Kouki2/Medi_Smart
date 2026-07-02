@@ -5,49 +5,25 @@ import PageHeader from "../../components/admin/PageHeader";
 import { getInitials } from "../../utils/getInitials";
 
 const AdminHome = () => {
-  const { user, refreshUser } = useOutletContext();
-  const [area, setArea] = useState(user?.area || null);
+  const { user } = useOutletContext();
   const [staff, setStaff] = useState([]);
-  const [form, setForm] = useState({ name: "", address: "" });
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [isCreating, setIsCreating] = useState(false);
-
-  const loadStaff = async () => {
-    try {
-      const staffRes = await api.get("/api/areas/staff");
-      setStaff(staffRes.data.staff);
-    } catch (error) {
-      console.error("Failed to load staff", error);
-    }
-  };
 
   useEffect(() => {
+    const loadStaff = async () => {
+      try {
+        const staffRes = await api.get("/api/areas/staff");
+        setStaff(staffRes.data.staff);
+      } catch (error) {
+        console.error("Failed to load staff", error);
+      }
+    };
+
     if (user?.area) {
-      setArea(user.area);
       loadStaff();
     }
   }, [user]);
 
-  const handleCreateArea = async (e) => {
-    e.preventDefault();
-    setErrorMessage(null);
-    if (!form.name.trim()) {
-      setErrorMessage("Area name is required.");
-      return;
-    }
-    try {
-      setIsCreating(true);
-      const response = await api.post("/api/areas/create", form);
-      setArea(response.data.area);
-      await loadStaff();
-      await refreshUser();
-      setForm({ name: "", address: "" });
-    } catch (error) {
-      setErrorMessage(error.response?.data?.message || "Failed to create area.");
-    } finally {
-      setIsCreating(false);
-    }
-  };
+  const area = user?.area;
 
   return (
     <div className="max-w-3xl">
@@ -65,35 +41,7 @@ const AdminHome = () => {
       )}
 
       <div className="admin-card p-4">
-        {!area ? (
-          <>
-            <p className="text-xs text-gray-600 mb-3">Create your area to get a code for staff.</p>
-            {errorMessage && <p className="text-red-500 text-xs mb-3">{errorMessage}</p>}
-            <form onSubmit={handleCreateArea} className="space-y-3 max-w-sm">
-              <input
-                type="text"
-                placeholder="Area name"
-                value={form.name}
-                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                className="w-full text-xs border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-health-cyan"
-              />
-              <input
-                type="text"
-                placeholder="Address (optional)"
-                value={form.address}
-                onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))}
-                className="w-full text-xs border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-health-cyan"
-              />
-              <button
-                type="submit"
-                disabled={isCreating}
-                className="text-xs px-4 py-2 bg-health-blue text-white rounded-md hover:bg-health-navy disabled:opacity-50"
-              >
-                {isCreating ? "Creating..." : "Create Area"}
-              </button>
-            </form>
-          </>
-        ) : (
+        {area && (
           <div className="space-y-4">
             <div className="border-b border-gray-100 pb-4">
               <h2 className="text-sm font-semibold text-health-navy">{area.name}</h2>
@@ -103,7 +51,7 @@ const AdminHome = () => {
             <div>
               <h3 className="text-xs font-semibold text-gray-700 mb-2">Staff</h3>
               {staff.length === 0 ? (
-                <p className="text-xs text-gray-400">No staff yet.</p>
+                <p className="text-xs text-gray-400">No staff yet. Share your area code to invite nurses.</p>
               ) : (
                 <ul className="divide-y divide-gray-100">
                   {staff.map((member) => (

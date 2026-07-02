@@ -52,7 +52,7 @@ const Sidebar = ({ user, onLogout }) => {
   };
 
   return (
-    <aside className="w-56 shrink-0 bg-white border-r border-gray-200 flex flex-col min-h-screen">
+    <aside className="fixed left-0 top-0 z-30 w-56 h-screen bg-white border-r border-gray-200 flex flex-col">
       <div className="px-4 py-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-health-blue flex items-center justify-center shrink-0">

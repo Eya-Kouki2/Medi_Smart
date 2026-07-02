@@ -16,6 +16,7 @@ const AdminLayout = () => {
         return;
       }
       setUser(response.data.user);
+      return response.data.user;
     } catch {
       navigate("/login");
     }
@@ -24,13 +25,16 @@ const AdminLayout = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await refreshUser();
+        const currentUser = await refreshUser();
+        if (currentUser && !currentUser.area) {
+          navigate("/admin/setup", { replace: true });
+        }
       } finally {
         setIsLoading(false);
       }
     };
     checkAuth();
-  }, [refreshUser]);
+  }, [refreshUser, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -49,10 +53,14 @@ const AdminLayout = () => {
     );
   }
 
+  if (!user?.area) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar user={user} onLogout={handleLogout} />
-      <main className="flex-1 p-5 overflow-auto min-w-0">
+      <main className="ml-56 min-h-screen p-5 overflow-auto min-w-0">
         <Outlet context={{ user, refreshUser }} />
       </main>
     </div>
