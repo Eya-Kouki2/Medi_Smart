@@ -10,6 +10,7 @@ const formatUser = (user) => ({
     areaId: user.areaId,
     isVerified: user.isVerified,
     lastLogin: user.lastLogin,
+    createdAt: user.createdAt,
 });
 
 const createArea = async (req, res) => {
@@ -103,7 +104,9 @@ const getAreaStaff = async (req, res) => {
         const staff = await User.find({
             areaId: user.areaId,
             role: { $in: ['nurses', 'triage', 'pharmacy'] },
-        }).select('-password');
+        })
+            .select('-password')
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,

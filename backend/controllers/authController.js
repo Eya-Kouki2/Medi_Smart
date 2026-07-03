@@ -1,6 +1,7 @@
 const User = require('../models/userModel')
 const Area = require('../models/areaModel')
 const bcryptjs = require('bcryptjs');
+const cloudinary = require('../config/cloudinary');
 const generateTokenAndSetCookie  = require('../utils/generateTokenAndSetCookie');
 const {
     sendVerificationEmail, 
@@ -8,6 +9,7 @@ const {
     sendResetPasswordEmail,
     sendResetSuccessEmail
 } = require('../mailer/emails');
+const { isMongoConnectionError, mongoConnectionMessage } = require('../utils/mongoError');
 
 const VALID_ROLES = ['admin', 'nurses'];
 
@@ -261,7 +263,13 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.log('Error in login', error);
+        console.error('Error in login', error);
+        if (isMongoConnectionError(error)) {
+            return res.status(503).json({
+                success: false,
+                message: mongoConnectionMessage,
+            });
+        }
         res.status(400).json({
             success: false,
             message: error.message
@@ -445,6 +453,100 @@ const checkAuth = async (req, res) => {
 };
 
 
+const updateProfilePicture = async (req, res) => {
+    try {
+        const { profilePicture, profilePicturePublicId } = req.body;
+
+        if (!profilePicture || !profilePicturePublicId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Profile picture URL and public ID are required',
+            });
+        }
+
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+        if (!cloudName) {
+            return res.status(500).json({
+                success: false,
+                message: 'Cloudinary is not configured on the server',
+            });
+        }
+
+        const expectedUrlPrefix = `https://res.cloudinary.com/${cloudName}/`;
+        if (!profilePicture.startsWith(expectedUrlPrefix)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid profile picture URL',
+            });
+        }
+
+        const user = await User.findById(req.userID);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        if (user.profilePicturePublicId && user.profilePicturePublicId !== profilePicturePublicId) {
+            await cloudinary.uploader.destroy(user.profilePicturePublicId).catch(() => {});
+        }
+
+        user.profilePicture = profilePicture;
+        user.profilePicturePublicId = profilePicturePublicId;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Profile picture updated',
+            user: await formatUserResponse(user),
+        });
+    } catch (error) {
+        console.error('Error in updateProfilePicture', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to save profile picture',
+        });
+    }
+};
+
+
+const deleteProfilePicture = async (req, res) => {
+    try {
+        const user = await User.findById(req.userID);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        if (!user.profilePicture) {
+            return res.status(400).json({
+                success: false,
+                message: 'No profile picture to delete',
+            });
+        }
+
+        user.profilePicture = null;
+        user.profilePicturePublicId = null;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Profile picture removed from your account',
+            user: await formatUserResponse(user),
+        });
+    } catch (error) {
+        console.error('Error in deleteProfilePicture', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to delete profile picture',
+        });
+    }
+};
+
+
 module.exports = {
     signup,
     verifyEmail,
@@ -454,5 +556,7 @@ module.exports = {
     forgotPassword,
     verifyResetCode,
     resetPassword,
-    checkAuth
+    checkAuth,
+    updateProfilePicture,
+    deleteProfilePicture,
 }

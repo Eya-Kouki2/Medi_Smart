@@ -17,6 +17,7 @@ import Reports from "../pages/admin/Reports";
 import AuditLog from "../pages/admin/AuditLog";
 import Settings from "../pages/admin/Settings";
 import Profile from "../pages/admin/Profile";
+import DiseaseClasses from "../pages/admin/DiseaseClasses";
 import StaffDashboard from "../pages/staff/StaffDashboard";
 
 const AppRoutes = () => (
@@ -32,6 +33,7 @@ const AppRoutes = () => (
       <Route path="patients" element={<Patients />} />
       <Route path="triage" element={<Triage />} />
       <Route path="pharmacy" element={<Pharmacy />} />
+      <Route path="disease-classes" element={<DiseaseClasses />} />
       <Route path="analytics" element={<Analytics />} />
       <Route path="reports" element={<Reports />} />
       <Route path="audit-log" element={<AuditLog />} />

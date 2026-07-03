@@ -8,7 +8,9 @@ const {
     verifyResetCode,
     resetPassword,
     checkAuth,
-    resendVerificationEmail
+    resendVerificationEmail,
+    updateProfilePicture,
+    deleteProfilePicture,
 } = require('../controllers/authController');
 
 const verifyToken = require('../middleware/verifyToken');
@@ -16,6 +18,10 @@ const verifyToken = require('../middleware/verifyToken');
 const router = express.Router();
 
 router.get('/check-auth', verifyToken, checkAuth);
+
+router.post('/profile-picture', verifyToken, updateProfilePicture);
+
+router.delete('/profile-picture', verifyToken, deleteProfilePicture);
 
 router.post('/signup', signup);
 

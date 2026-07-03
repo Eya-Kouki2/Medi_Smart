@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
+const { isMongoConnectionError, mongoConnectionMessage } = require('../utils/mongoError');
 
 const verifyToken = async (req, res, next) => {
 
@@ -37,7 +38,22 @@ const verifyToken = async (req, res, next) => {
         next();
 
     } catch (error) {
-        console.log('Error in verifyToken', error);
+        if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+            return res.status(401).json({
+                success: false,
+                message: 'Unauthorized - invalid or expired token',
+            });
+        }
+
+        if (isMongoConnectionError(error)) {
+            console.error('Error in verifyToken (database):', error.message);
+            return res.status(503).json({
+                success: false,
+                message: mongoConnectionMessage,
+            });
+        }
+
+        console.error('Error in verifyToken', error);
         return res.status(500).json({
             success: false,
             message: 'Server error'

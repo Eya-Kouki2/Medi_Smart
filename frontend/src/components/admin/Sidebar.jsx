@@ -1,43 +1,15 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import {
-  HiOutlineViewGrid,
-  HiOutlineUserAdd,
-  HiOutlineClipboardList,
-  HiOutlineBeaker,
-  HiOutlineChartBar,
-  HiOutlineDocumentReport,
-  HiOutlineDocumentText,
-  HiOutlineCog,
-  HiOutlineLogout,
-} from "react-icons/hi";
 import { FaHeartbeat, FaCopy, FaCheck } from "react-icons/fa";
 
-const navSections = [
-  {
-    label: "Overview",
-    items: [{ to: "/admin", label: "Dashboard", icon: HiOutlineViewGrid, end: true }],
-  },
-  {
-    label: "Clinical",
-    items: [
-      { to: "/admin/patients", label: "Patients", icon: HiOutlineUserAdd },
-      { to: "/admin/triage", label: "Triage", icon: HiOutlineClipboardList },
-      { to: "/admin/pharmacy", label: "Pharmacy", icon: HiOutlineBeaker },
-    ],
-  },
-  {
-    label: "Analytics",
-    items: [
-      { to: "/admin/analytics", label: "Analytics", icon: HiOutlineChartBar },
-      { to: "/admin/reports", label: "Reports", icon: HiOutlineDocumentReport },
-      { to: "/admin/audit-log", label: "Audit Log", icon: HiOutlineDocumentText },
-    ],
-  },
-  {
-    label: "System",
-    items: [{ to: "/admin/settings", label: "Settings", icon: HiOutlineCog }],
-  },
+const navItems = [
+  { to: "/admin", label: "Dashboard", emoji: "📊", end: true },
+  { to: "/admin/patients", label: "Patients", emoji: "👥" },
+  { to: "/admin/triage", label: "Smart Triage", emoji: "🩺" },
+  { to: "/admin/pharmacy", label: "Pharmacy Monitor", emoji: "💊" },
+  { to: "/admin/disease-classes", label: "Disease Classes", emoji: "🦠" },
+  { to: "/admin/reports", label: "Reports", emoji: "📜" },
+  { to: "/admin/profile", label: "Profile", emoji: "👤" },
 ];
 
 const Sidebar = ({ user, onLogout }) => {
@@ -83,32 +55,27 @@ const Sidebar = ({ user, onLogout }) => {
       )}
 
       <nav className="flex-1 px-3 py-3 overflow-y-auto">
-        {navSections.map((section) => (
-          <div key={section.label} className="mb-3 last:mb-0">
-            <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-              {section.label}
-            </p>
-            <div className="space-y-0.5">
-              {section.items.map(({ to, label, icon: Icon, end }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  end={end}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-colors ${
-                      isActive
-                        ? "bg-health-ice text-health-navy font-semibold"
-                        : "text-gray-600 font-medium hover:bg-gray-50 hover:text-gray-900"
-                    }`
-                  }
-                >
-                  <Icon className="text-lg shrink-0 stroke-[1.5]" />
-                  {label}
-                </NavLink>
-              ))}
-            </div>
-          </div>
-        ))}
+        <div className="space-y-0.5">
+          {navItems.map(({ to, label, emoji, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-colors ${
+                  isActive
+                    ? "bg-health-ice text-health-navy font-semibold"
+                    : "text-gray-600 font-medium hover:bg-gray-50 hover:text-gray-900"
+                }`
+              }
+            >
+              <span className="text-base shrink-0 leading-none" aria-hidden="true">
+                {emoji}
+              </span>
+              {label}
+            </NavLink>
+          ))}
+        </div>
       </nav>
 
       <div className="px-3 py-3 border-t border-gray-100">
@@ -117,8 +84,10 @@ const Sidebar = ({ user, onLogout }) => {
           onClick={onLogout}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-colors"
         >
-          <HiOutlineLogout className="text-lg shrink-0" />
-          Sign out
+          <span className="text-base shrink-0 leading-none" aria-hidden="true">
+            🚪
+          </span>
+          Logout
         </button>
       </div>
     </aside>

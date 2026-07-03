@@ -35,6 +35,14 @@ const userShema = mongoose.Schema({
         ref: 'Area',
         default: null,
     },
+    profilePicture: {
+        type: String,
+        default: null,
+    },
+    profilePicturePublicId: {
+        type: String,
+        default: null,
+    },
 },
 {
     timestamps: true

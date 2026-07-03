@@ -4,6 +4,8 @@ const cookieParser = require('cookie-parser');
 const connectDB  = require('./config/db');
 const router = require('./routes/authRoutes');
 const areaRouter = require('./routes/areaRoutes');
+const diseaseClassRouter = require('./routes/diseaseClassRoutes');
+const patientRouter = require('./routes/patientRoutes');
 const cors = require('cors');
 
 dotenv.config();
@@ -32,6 +34,8 @@ app.use(cookieParser()); // allows us to parse incoming cookies
 
 app.use('/api/auth', router)
 app.use('/api/areas', areaRouter)
+app.use('/api/disease-classes', diseaseClassRouter)
+app.use('/api/patients', patientRouter)
 
 app.listen(port, () => {
     connectDB()
