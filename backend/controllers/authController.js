@@ -546,6 +546,53 @@ const deleteProfilePicture = async (req, res) => {
     }
 };
 
+const updateProfile = async (req, res) => {
+    try {
+        const { name, email } = req.body;
+
+        if (!name || !email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name and email are required',
+            });
+        }
+
+        const user = await User.findById(req.userID);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        if (email !== user.email) {
+            const emailTaken = await User.findOne({ email });
+            if (emailTaken) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Email address is already in use',
+                });
+            }
+            user.email = email;
+        }
+
+        user.name = name;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Profile details updated successfully',
+            user: await formatUserResponse(user),
+        });
+    } catch (error) {
+        console.error('Error in updateProfile', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to update profile details',
+        });
+    }
+};
+
 
 module.exports = {
     signup,
@@ -559,4 +606,5 @@ module.exports = {
     checkAuth,
     updateProfilePicture,
     deleteProfilePicture,
+    updateProfile,
 }

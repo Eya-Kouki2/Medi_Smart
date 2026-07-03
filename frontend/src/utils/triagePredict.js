@@ -15,11 +15,12 @@ const SYMPTOM_RULES = [
   { keywords: ["jaundice", "yellow eyes", "abdominal pain", "hepatitis"], maladie: "hepatite", weight: 3 },
   { keywords: ["severe pain", "anemia", "fatigue", "drepanocytose"], maladie: "drepanocytose", weight: 3 },
   { keywords: ["stiff neck", "fever", "fièvre", "headache", "confusion"], maladie: "meningite", weight: 5 },
-  { keywords: ["rash", "fever", "fièvre", "red eyes", "rougeole"], maladie: "rougeole", weight: 4 },
+  { keywords: ["fever", "fièvre", "rash", "red eyes", "rougeole"], maladie: "rougeole", weight: 4 },
   { keywords: ["itchy rash", "blisters", "varicelle"], maladie: "varicelle", weight: 4 },
   { keywords: ["sore throat", "fever", "fièvre", "neck swelling"], maladie: "diphterie", weight: 4 },
   { keywords: ["fever", "fièvre", "abdominal pain", "constipation", "typhoïde"], maladie: "typhoide", weight: 3 },
   { keywords: ["severe diarrhea", "dehydration", "vomiting"], maladie: "cholera", weight: 5 },
+  { keywords: ["rash", "fever", "fièvre", "swollen lymph nodes", "blisters", "lesions", "mpox"], maladie: "mpox", weight: 4 },
 ];
 
 const normalize = (text) => text.toLowerCase().trim();
@@ -35,6 +36,8 @@ export const COMMON_SYMPTOMS = [
   "Headache",
   "Breathing Difficulty",
   "Loss of Smell",
+  "Swollen Lymph Nodes",
+  "Blisters / Lesions",
 ];
 
 export const buildTriageContext = (vitals = {}, duration = "", notes = "") => {

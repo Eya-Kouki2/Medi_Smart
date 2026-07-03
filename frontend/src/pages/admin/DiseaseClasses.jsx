@@ -6,10 +6,10 @@ import { MALADIES, getMaladieLabel } from "../../constants/maladies";
 import PageHeader from "../../components/admin/PageHeader";
 
 const SEVERITY_OPTIONS = [
-  { value: "low", label: "Low", badge: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-  { value: "moderate", label: "Moderate", badge: "bg-amber-50 text-amber-700 border-amber-100" },
-  { value: "high", label: "High", badge: "bg-orange-50 text-orange-700 border-orange-100" },
-  { value: "critical", label: "Critical", badge: "bg-red-50 text-red-700 border-red-100" },
+  { value: "low",      label: "Low",      badge: "badge-low",      dot: "bg-emerald-400", bar: "#10b981" },
+  { value: "moderate", label: "Moderate", badge: "badge-moderate", dot: "bg-amber-400",   bar: "#f59e0b" },
+  { value: "high",     label: "High",     badge: "badge-high",     dot: "bg-orange-400",  bar: "#f97316" },
+  { value: "critical", label: "Critical", badge: "badge-critical", dot: "bg-red-500",     bar: "#ef4444" },
 ];
 
 const emptyForm = {
@@ -21,7 +21,7 @@ const emptyForm = {
 };
 
 const getSeverityMeta = (severity) =>
-  SEVERITY_OPTIONS.find((option) => option.value === severity) || SEVERITY_OPTIONS[1];
+  SEVERITY_OPTIONS.find((o) => o.value === severity) || SEVERITY_OPTIONS[1];
 
 const DiseaseClasses = () => {
   const { user } = useOutletContext();
@@ -48,101 +48,46 @@ const DiseaseClasses = () => {
   };
 
   useEffect(() => {
-    if (user?.area) {
-      loadClasses();
-    } else {
-      setIsLoading(false);
-    }
+    if (user?.area) loadClasses();
+    else setIsLoading(false);
   }, [user?.area]);
 
   const stats = useMemo(() => {
     const counts = { low: 0, moderate: 0, high: 0, critical: 0 };
-    classes.forEach((item) => {
-      counts[item.severity] = (counts[item.severity] || 0) + 1;
-    });
+    classes.forEach((item) => { counts[item.severity] = (counts[item.severity] || 0) + 1; });
     return counts;
   }, [classes]);
 
-  const resetForm = () => {
-    setForm(emptyForm);
-    setEditingId(null);
-    setShowForm(false);
-    setErrorMessage(null);
-  };
-
-  const openCreateForm = () => {
-    setForm(emptyForm);
-    setEditingId(null);
-    setShowForm(true);
-    setErrorMessage(null);
-  };
-
+  const resetForm = () => { setForm(emptyForm); setEditingId(null); setShowForm(false); setErrorMessage(null); };
+  const openCreateForm = () => { setForm(emptyForm); setEditingId(null); setShowForm(true); setErrorMessage(null); };
   const openEditForm = (item) => {
-    setForm({
-      name: item.name,
-      placeCode: item.placeCode ?? "",
-      description: item.description || "",
-      severity: item.severity,
-      maladie: item.maladie || "",
-    });
-    setEditingId(item._id);
-    setShowForm(true);
-    setErrorMessage(null);
+    setForm({ name: item.name, placeCode: item.placeCode ?? "", description: item.description || "", severity: item.severity, maladie: item.maladie || "" });
+    setEditingId(item._id); setShowForm(true); setErrorMessage(null);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMessage(null);
-
-    if (!form.name.trim()) {
-      setErrorMessage("Name is required.");
-      return;
-    }
-
-    if (!form.maladie) {
-      setErrorMessage("Please choose a maladie.");
-      return;
-    }
-
+    if (!form.name.trim())   { setErrorMessage("Name is required."); return; }
+    if (!form.maladie)       { setErrorMessage("Please choose a maladie."); return; }
     if (form.placeCode !== "" && (Number(form.placeCode) < 1 || Number(form.placeCode) > 200)) {
-      setErrorMessage("Place code must be between 1 and 200.");
-      return;
+      setErrorMessage("Place code must be between 1 and 200."); return;
     }
-
     if (form.placeCode !== "") {
       const placeCode = Number(form.placeCode);
-      const isTaken = classes.some(
-        (item) => Number(item.placeCode) === placeCode && item._id !== editingId
-      );
-      if (isTaken) {
-        setErrorMessage(`Place code ${placeCode} is already in use.`);
-        return;
+      if (classes.some((item) => Number(item.placeCode) === placeCode && item._id !== editingId)) {
+        setErrorMessage(`Place code ${placeCode} is already in use.`); return;
       }
     }
-
     try {
       setIsSaving(true);
-
-      if (editingId) {
-        await api.put(`/api/disease-classes/${editingId}`, {
-          ...form,
-          placeCode: form.placeCode === "" ? undefined : Number(form.placeCode),
-        });
-      } else {
-        await api.post("/api/disease-classes", {
-          ...form,
-          placeCode: form.placeCode === "" ? undefined : Number(form.placeCode),
-        });
-      }
-
+      const payload = { ...form, placeCode: form.placeCode === "" ? undefined : Number(form.placeCode) };
+      if (editingId) await api.put(`/api/disease-classes/${editingId}`, payload);
+      else           await api.post("/api/disease-classes", payload);
       await loadClasses();
       resetForm();
     } catch (error) {
-      setErrorMessage(
-        error.response?.status === 503
-          ? error.response.data.message
-          : error.response?.data?.message || "Failed to save disease class."
-      );
+      setErrorMessage(error.response?.status === 503 ? error.response.data.message : error.response?.data?.message || "Failed to save disease class.");
     } finally {
       setIsSaving(false);
     }
@@ -150,7 +95,6 @@ const DiseaseClasses = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this disease class?")) return;
-
     try {
       await api.delete(`/api/disease-classes/${id}`);
       setClasses((prev) => prev.filter((item) => item._id !== id));
@@ -164,213 +108,163 @@ const DiseaseClasses = () => {
     return (
       <div className="w-full">
         <PageHeader title="Disease Classes" description="Monitor and manage disease classifications" />
-        <div className="admin-card p-6 text-center">
-          <p className="text-xs text-gray-500">Complete clinic setup to manage disease classes.</p>
+        <div className="admin-card p-10 text-center">
+          <p className="text-2xl mb-2">🦠</p>
+          <p className="text-xs text-slate-500 font-medium">Complete clinic setup to manage disease classes.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-        <PageHeader
-          title="Disease Classes"
-          description={`Classifications for ${user.area.name}`}
-        />
-        <button
-          type="button"
-          onClick={openCreateForm}
-          className="inline-flex items-center gap-2 self-start text-xs font-semibold px-4 py-2 rounded-lg bg-gradient-to-r from-health-blue to-health-cyan text-white hover:from-health-navy hover:to-health-blue transition-all"
-        >
-          <FaPlus className="text-[10px]" />
-          Add class
-        </button>
-      </div>
+    <div className="w-full animate-fade-in">
+      <PageHeader
+        title="Disease Classes"
+        description={`Classifications for ${user.area.name}`}
+        actions={
+          <button type="button" onClick={openCreateForm} className="btn-primary">
+            <FaPlus className="text-[10px]" /> Add class
+          </button>
+        }
+      />
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-        <div className="admin-card px-3 py-3">
-          <p className="text-[10px] text-gray-500 uppercase tracking-wide">Total</p>
-          <p className="text-lg font-semibold text-health-navy">{classes.length}</p>
+      {/* ── KPI bar ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+        <div className="admin-card px-4 py-4">
+          <p className="section-header mb-1">Total</p>
+          <p className="text-2xl font-bold text-health-navy">{classes.length}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">disease classes</p>
         </div>
-        {SEVERITY_OPTIONS.map(({ value, label, badge }) => (
-          <div key={value} className="admin-card px-3 py-3">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide">{label}</p>
-            <p className={`inline-flex mt-1 text-sm font-semibold px-2 py-0.5 rounded border ${badge}`}>
-              {stats[value] || 0}
-            </p>
+        {SEVERITY_OPTIONS.map(({ value, label, badge, dot }) => (
+          <div key={value} className="admin-card px-4 py-4">
+            <p className="section-header mb-1">{label}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`w-2 h-2 rounded-full ${dot}`} />
+              <p className="text-2xl font-bold text-health-navy">{stats[value] || 0}</p>
+            </div>
           </div>
         ))}
       </div>
 
       {errorMessage && !showForm && (
-        <p className="text-xs text-red-500 mb-4">{errorMessage}</p>
+        <div className="admin-card border-red-100 bg-red-50 p-4 mb-4">
+          <p className="text-xs text-red-600 font-medium">{errorMessage}</p>
+        </div>
       )}
 
+      {/* ── Form panel ── */}
       {showForm && (
-        <div className="admin-card p-4 sm:p-5 mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-health-navy">
-              {editingId ? "Edit disease class" : "New disease class"}
-            </h2>
-            <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600">
+        <div className="admin-card p-5 sm:p-6 mb-6 border-health-blue/20">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-base font-bold text-health-navy">
+                {editingId ? "Edit Disease Class" : "New Disease Class"}
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">Fill in the classification details below.</p>
+            </div>
+            <button type="button" onClick={resetForm} className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
               <FaTimes />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-3">
+          <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="auth-label" htmlFor="name">Name</label>
-              <input
-                id="name"
-                value={form.name}
-                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g. Respiratory infection"
-                className="auth-input"
-              />
+              <label className="auth-label" htmlFor="dc-name">Name</label>
+              <input id="dc-name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="e.g. Respiratory Infection" className="auth-input" />
             </div>
-
             <div>
-              <label className="auth-label" htmlFor="placeCode">
-                Place code <span className="text-gray-400 font-normal">(optional, 1–200)</span>
-              </label>
-              <input
-                id="placeCode"
-                type="number"
-                min={1}
-                max={200}
-                value={form.placeCode}
-                onChange={(e) => setForm((prev) => ({ ...prev, placeCode: e.target.value }))}
-                placeholder="Random code assigned if empty"
-                className="auth-input"
-              />
+              <label className="auth-label" htmlFor="dc-code">Place code <span className="text-slate-400 normal-case font-normal">(optional, 1–200)</span></label>
+              <input id="dc-code" type="number" min={1} max={200} value={form.placeCode} onChange={(e) => setForm((p) => ({ ...p, placeCode: e.target.value }))} placeholder="Auto-assigned if empty" className="auth-input" />
             </div>
-
             <div>
-              <label className="auth-label" htmlFor="severity">Severity</label>
-              <select
-                id="severity"
-                value={form.severity}
-                onChange={(e) => setForm((prev) => ({ ...prev, severity: e.target.value }))}
-                className="auth-input"
-              >
-                {SEVERITY_OPTIONS.map(({ value, label }) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
+              <label className="auth-label" htmlFor="dc-severity">Severity</label>
+              <select id="dc-severity" value={form.severity} onChange={(e) => setForm((p) => ({ ...p, severity: e.target.value }))} className="auth-input">
+                {SEVERITY_OPTIONS.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
               </select>
             </div>
-
             <div>
-              <label className="auth-label" htmlFor="maladie">Sickness</label>
-              <select
-                id="maladie"
-                value={form.maladie}
-                onChange={(e) => setForm((prev) => ({ ...prev, maladie: e.target.value }))}
-                className="auth-input"
-              >
+              <label className="auth-label" htmlFor="dc-maladie">Sickness</label>
+              <select id="dc-maladie" value={form.maladie} onChange={(e) => setForm((p) => ({ ...p, maladie: e.target.value }))} className="auth-input">
                 <option value="">Choose a maladie</option>
-                {MALADIES.map(({ value, label }) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
+                {MALADIES.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
               </select>
             </div>
-
             <div className="sm:col-span-2">
-              <label className="auth-label" htmlFor="description">Description</label>
-              <textarea
-                id="description"
-                value={form.description}
-                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="Brief notes about this classification..."
-                rows={3}
-                className="auth-input resize-none"
-              />
+              <label className="auth-label" htmlFor="dc-desc">Description</label>
+              <textarea id="dc-desc" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Brief notes about this classification..." rows={3} className="auth-input resize-none" />
             </div>
-
-            {errorMessage && <p className="sm:col-span-2 text-xs text-red-500">{errorMessage}</p>}
-
-            <div className="sm:col-span-2 flex gap-2">
-              <button type="submit" disabled={isSaving} className="auth-btn-primary !w-auto px-5">
-                {isSaving ? "Saving..." : editingId ? "Update class" : "Create class"}
+            {errorMessage && <p className="sm:col-span-2 text-xs text-red-500 font-medium">{errorMessage}</p>}
+            <div className="sm:col-span-2 flex gap-2 pt-1">
+              <button type="submit" disabled={isSaving} className="btn-primary">
+                {isSaving ? "Saving…" : editingId ? "Update Class" : "Create Class"}
               </button>
-              <button
-                type="button"
-                onClick={resetForm}
-                className="text-xs font-semibold px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
+              <button type="button" onClick={resetForm} className="btn-outline">Cancel</button>
             </div>
           </form>
         </div>
       )}
 
+      {/* ── Class list ── */}
       {isLoading ? (
-        <p className="text-xs text-gray-400">Loading disease classes...</p>
+        <div className="admin-card p-10 text-center">
+          <div className="w-6 h-6 border-2 border-health-blue border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          <p className="text-xs text-slate-400">Loading disease classes…</p>
+        </div>
       ) : classes.length === 0 ? (
-        <div className="admin-card p-8 text-center">
-          <p className="text-3xl mb-2">🦠</p>
-          <p className="text-sm font-semibold text-health-navy">No disease classes yet</p>
-          <p className="text-xs text-gray-500 mt-1 mb-4">
-            Create classifications to organize triage and monitoring workflows.
-          </p>
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="text-xs font-semibold px-4 py-2 rounded-lg bg-health-blue text-white hover:bg-health-navy"
-          >
-            Add your first class
+        <div className="admin-card p-12 text-center">
+          <p className="text-4xl mb-3">🦠</p>
+          <p className="text-sm font-bold text-health-navy">No disease classes yet</p>
+          <p className="text-xs text-slate-500 mt-1 mb-5">Create classifications to organize triage and monitoring workflows.</p>
+          <button type="button" onClick={openCreateForm} className="btn-primary mx-auto">
+            <FaPlus className="text-[10px]" /> Add your first class
           </button>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {classes.map((item) => {
-            const severity = getSeverityMeta(item.severity);
-
+            const sev = getSeverityMeta(item.severity);
             return (
-              <div key={item._id} className="admin-card p-4 flex flex-col">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-sm font-semibold text-health-navy">{item.name}</h3>
-                      <span className="text-[10px] font-mono font-semibold text-health-blue bg-health-ice/70 px-2 py-0.5 rounded">
-                        #{item.placeCode}
-                      </span>
+              <div key={item._id} className="admin-card overflow-hidden flex flex-col hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+                {/* Top strip for severity color */}
+                <div className="h-1 w-full" style={{ background: sev.bar }} />
+                
+                <div className="p-5 flex-1 flex flex-col">
+                  {/* Header: Title and Actions */}
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <h3 className="text-base font-bold text-health-navy break-words leading-tight flex-1">{item.name}</h3>
+                    <div className="flex items-center gap-1 shrink-0 bg-slate-50 rounded-lg p-0.5">
+                      <button type="button" onClick={() => openEditForm(item)} className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-health-blue hover:bg-white hover:shadow-sm transition-all" aria-label={`Edit ${item.name}`}>
+                        <FaEdit className="text-[11px]" />
+                      </button>
+                      <button type="button" onClick={() => handleDelete(item._id)} className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-white hover:shadow-sm transition-all" aria-label={`Delete ${item.name}`}>
+                        <FaTrash className="text-[11px]" />
+                      </button>
                     </div>
-                    <span className={`inline-flex mt-2 text-[10px] font-semibold px-2 py-0.5 rounded border ${severity.badge}`}>
-                      {severity.label}
-                    </span>
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => openEditForm(item)}
-                      className="w-7 h-7 rounded-md text-gray-400 hover:text-health-blue hover:bg-health-ice/50 flex items-center justify-center"
-                      aria-label={`Edit ${item.name}`}
-                    >
-                      <FaEdit className="text-xs" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(item._id)}
-                      className="w-7 h-7 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center"
-                      aria-label={`Delete ${item.name}`}
-                    >
-                      <FaTrash className="text-xs" />
-                    </button>
+                  {/* Prominent Place Code & Severity */}
+                  <div className="flex items-center justify-between bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 mb-4">
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Class / Room</p>
+                      <code className="text-xl font-mono font-black text-health-blue">#{item.placeCode}</code>
+                    </div>
+                    <div className="text-right">
+                      <span className={`inline-flex ${sev.badge} px-2.5 py-1 text-[11px] shadow-sm`}>{sev.label}</span>
+                    </div>
                   </div>
+
+                  {/* Details */}
+                  {item.maladie && (
+                    <p className="text-xs text-slate-600 mb-2.5 flex items-center gap-1.5 bg-slate-50/50 p-2 rounded-lg border border-slate-50">
+                      <span className="w-2 h-2 rounded-full shadow-sm" style={{ background: sev.bar }} />
+                      <span className="font-bold text-slate-800">Condition:</span> 
+                      <span className="font-bold" style={{ color: sev.bar }}>{getMaladieLabel(item.maladie)}</span>
+                    </p>
+                  )}
+                  {item.description && (
+                    <p className="text-xs text-slate-500 leading-relaxed flex-1">{item.description}</p>
+                  )}
                 </div>
-
-                {item.maladie && (
-                  <p className="text-xs text-gray-600 mb-2">
-                    <span className="font-medium text-gray-500">Maladie:</span> {getMaladieLabel(item.maladie)}
-                  </p>
-                )}
-
-                {item.description && (
-                  <p className="text-xs text-gray-500 flex-1">{item.description}</p>
-                )}
               </div>
             );
           })}

@@ -9,10 +9,12 @@ const {
     addPatientHistory,
     updatePatientHistory,
     deletePatient,
+    getPatientsWithStats,
 } = require('../controllers/patientController');
 
 const router = express.Router();
 
+router.get('/stats', verifyToken, requireRole('admin'), getPatientsWithStats);
 router.get('/', verifyToken, requireRole('admin'), getPatients);
 router.get('/:id', verifyToken, requireRole('admin'), getPatient);
 router.post('/', verifyToken, requireRole('admin'), createPatient);
@@ -22,3 +24,4 @@ router.put('/:id/history/:historyId', verifyToken, requireRole('admin'), updateP
 router.delete('/:id', verifyToken, requireRole('admin'), deletePatient);
 
 module.exports = router;
+

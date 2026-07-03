@@ -11,6 +11,7 @@ const {
     resendVerificationEmail,
     updateProfilePicture,
     deleteProfilePicture,
+    updateProfile,
 } = require('../controllers/authController');
 
 const verifyToken = require('../middleware/verifyToken');
@@ -22,6 +23,8 @@ router.get('/check-auth', verifyToken, checkAuth);
 router.post('/profile-picture', verifyToken, updateProfilePicture);
 
 router.delete('/profile-picture', verifyToken, deleteProfilePicture);
+
+router.put('/profile', verifyToken, updateProfile);
 
 router.post('/signup', signup);
 

@@ -392,28 +392,33 @@ const Patients = () => {
   }
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-        <PageHeader title="Patients" description="Patient records for your clinic" />
-        <button
-          type="button"
-          onClick={() => { setShowForm(true); setErrorMessage(null); }}
-          className="inline-flex items-center gap-2 self-start text-xs font-semibold px-4 py-2 rounded-lg bg-gradient-to-r from-health-blue to-health-cyan text-white hover:from-health-navy hover:to-health-blue transition-all"
-        >
-          <FaPlus className="text-[10px]" />
-          Add patient
-        </button>
-      </div>
+    <div className="w-full animate-fade-in">
+      <PageHeader
+        title="Patients"
+        description="Patient records for your clinic"
+        actions={
+          <button
+            type="button"
+            onClick={() => { setShowForm(true); setErrorMessage(null); }}
+            className="btn-primary"
+          >
+            <FaPlus className="text-[10px]" /> Add patient
+          </button>
+        }
+      />
 
       {showForm && (
-        <div className="admin-card p-4 sm:p-5 mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-health-navy">New patient</h2>
-            <button type="button" onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+        <div className="admin-card p-5 sm:p-6 mb-5">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-base font-bold text-health-navy">New Patient</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Register a new patient to your clinic.</p>
+            </div>
+            <button type="button" onClick={() => setShowForm(false)} className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
               <FaTimes />
             </button>
           </div>
-          <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="auth-label" htmlFor="cin">CIN</label>
               <input id="cin" value={form.cin} onChange={(e) => setForm((p) => ({ ...p, cin: e.target.value.toUpperCase() }))} className="auth-input uppercase" placeholder="12345678" required />
@@ -448,17 +453,13 @@ const Patients = () => {
               <input id="address" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))} className="auth-input" placeholder="City, street..." />
             </div>
             <div className="sm:col-span-2 lg:col-span-3">
-              <label className="auth-label" htmlFor="initialNote">Initial note <span className="text-gray-400 font-normal">(optional)</span></label>
+              <label className="auth-label" htmlFor="initialNote">Initial note <span className="text-slate-400 normal-case font-normal">(optional)</span></label>
               <textarea id="initialNote" value={form.initialNote} onChange={(e) => setForm((p) => ({ ...p, initialNote: e.target.value }))} rows={2} className="auth-input resize-none" placeholder="First visit notes..." />
             </div>
-            {errorMessage && <p className="sm:col-span-2 lg:col-span-3 text-xs text-red-500">{errorMessage}</p>}
-            <div className="sm:col-span-2 lg:col-span-3 flex gap-2">
-              <button type="submit" disabled={isSaving} className="auth-btn-primary !w-auto px-5">
-                {isSaving ? "Saving..." : "Add patient"}
-              </button>
-              <button type="button" onClick={() => setShowForm(false)} className="text-xs font-semibold px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
-                Cancel
-              </button>
+            {errorMessage && <p className="sm:col-span-2 lg:col-span-3 text-xs text-red-500 font-medium">{errorMessage}</p>}
+            <div className="sm:col-span-2 lg:col-span-3 flex gap-2 pt-1">
+              <button type="submit" disabled={isSaving} className="btn-primary">{isSaving ? "Saving…" : "Add patient"}</button>
+              <button type="button" onClick={() => setShowForm(false)} className="btn-outline">Cancel</button>
             </div>
           </form>
         </div>
@@ -466,69 +467,79 @@ const Patients = () => {
 
       <div className="admin-card overflow-hidden">
         {isLoading ? (
-          <p className="text-xs text-gray-400 p-4">Loading patients...</p>
+          <div className="p-10 text-center">
+            <div className="w-5 h-5 border-2 border-health-blue border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            <p className="text-xs text-slate-400">Loading patients…</p>
+          </div>
         ) : patients.length === 0 ? (
-          <p className="text-xs text-gray-400 p-8 text-center">No patients yet. Add your first patient above.</p>
+          <div className="p-12 text-center">
+            <p className="text-3xl mb-3">👥</p>
+            <p className="text-sm font-bold text-health-navy">No patients yet</p>
+            <p className="text-xs text-slate-400 mt-1">Add your first patient using the button above.</p>
+          </div>
         ) : (
           <>
-            <p className="text-[10px] text-gray-400 px-4 py-2 border-b border-gray-50">
-              Click a patient to view visit history
-            </p>
+            <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+              <p className="text-[11px] text-slate-400 font-medium">{patients.length} patient{patients.length !== 1 ? "s" : ""} — click a row to view visit history</p>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/80">
-                    <th className="px-4 py-3 font-semibold text-gray-500">CIN</th>
-                    <th className="px-4 py-3 font-semibold text-gray-500">Name</th>
-                    <th className="px-4 py-3 font-semibold text-gray-500 hidden sm:table-cell">Phone</th>
-                    <th className="px-4 py-3 font-semibold text-gray-500 hidden md:table-cell">Gender</th>
-                    <th className="px-4 py-3 font-semibold text-gray-500 hidden lg:table-cell">Blood</th>
-                    <th className="px-4 py-3 font-semibold text-gray-500 hidden md:table-cell">Visits</th>
-                    <th className="px-4 py-3 font-semibold text-gray-500 hidden md:table-cell">Last visit</th>
-                    <th className="px-4 py-3 font-semibold text-gray-500 text-right">Actions</th>
+                  <tr className="border-b border-slate-100" style={{ background: "linear-gradient(90deg,#f8fafc,#f1f5f9)" }}>
+                    <th className="px-4 py-3 section-header">CIN</th>
+                    <th className="px-4 py-3 section-header">Name</th>
+                    <th className="px-4 py-3 section-header hidden sm:table-cell">Phone</th>
+                    <th className="px-4 py-3 section-header hidden md:table-cell">Gender</th>
+                    <th className="px-4 py-3 section-header hidden lg:table-cell">Blood</th>
+                    <th className="px-4 py-3 section-header hidden md:table-cell">Visits</th>
+                    <th className="px-4 py-3 section-header hidden md:table-cell">Last visit</th>
+                    <th className="px-4 py-3 section-header text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {patients.map((patient) => (
-                    <tr
-                      key={patient._id}
-                      onClick={() => openPatientHistory(patient._id)}
-                      className="hover:bg-health-ice/30 transition-colors cursor-pointer"
-                    >
-                      <td className="px-4 py-3 font-mono text-health-blue font-semibold">{patient.cin}</td>
-                      <td className="px-4 py-3 font-semibold text-health-navy">{patient.name}</td>
-                      <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{patient.phone || "—"}</td>
-                      <td className="px-4 py-3 text-gray-600 hidden md:table-cell capitalize">
-                        {GENDER_LABELS[patient.gender] || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">{patient.bloodType || "—"}</td>
-                      <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{patient.historyCount ?? 0}</td>
-                      <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{formatDate(patient.lastVisit)}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={(e) => openEditPatient(patient._id, e)}
-                            className="p-2 text-gray-400 hover:text-health-blue rounded-lg hover:bg-health-ice/50"
-                            aria-label="Edit patient"
-                            title="Edit patient"
-                          >
-                            <FaEdit className="text-[11px]" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => requestDeletePatient(patient, e)}
-                            disabled={isDeletingPatient}
-                            className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 disabled:opacity-40"
-                            aria-label="Delete patient"
-                            title="Delete patient"
-                          >
-                            <FaTrash className="text-[11px]" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                <tbody className="divide-y divide-slate-50">
+                  {patients.map((patient) => {
+                    const initials = patient.name?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
+                    return (
+                      <tr
+                        key={patient._id}
+                        onClick={() => openPatientHistory(patient._id)}
+                        className="hover:bg-health-ice/20 transition-colors cursor-pointer group"
+                      >
+                        <td className="px-4 py-3">
+                          <code className="font-mono text-health-blue font-bold text-[11px] bg-health-ice/50 px-1.5 py-0.5 rounded">{patient.cin}</code>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-health-blue to-health-cyan flex items-center justify-center shrink-0">
+                              <span className="text-[9px] font-bold text-white">{initials}</span>
+                            </div>
+                            <span className="font-semibold text-health-navy">{patient.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 hidden sm:table-cell">{patient.phone || "—"}</td>
+                        <td className="px-4 py-3 hidden md:table-cell capitalize">
+                          <span className="stat-pill-slate">{GENDER_LABELS[patient.gender] || "—"}</span>
+                        </td>
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          {patient.bloodType ? <span className="stat-pill-red">{patient.bloodType}</span> : <span className="text-slate-400">—</span>}
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <span className="stat-pill-blue">{patient.historyCount ?? 0}</span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 hidden md:table-cell">{formatDate(patient.lastVisit)}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button type="button" onClick={(e) => openEditPatient(patient._id, e)} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-health-blue hover:bg-health-ice/50 transition-colors" aria-label="Edit patient">
+                              <FaEdit className="text-[11px]" />
+                            </button>
+                            <button type="button" onClick={(e) => requestDeletePatient(patient, e)} disabled={isDeletingPatient} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors" aria-label="Delete patient">
+                              <FaTrash className="text-[11px]" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -538,23 +549,23 @@ const Patients = () => {
 
       {(selectedPatient || isLoadingPatient) && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-health-navy/40 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-health-navy/50 backdrop-blur-sm"
           onClick={closeModal}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
+            className="glass-card w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-health-navy/5 to-health-cyan/5">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100" style={{ background: "linear-gradient(135deg,#f8fafc,#e8f4fd)" }}>
               <div>
-                <h2 className="text-sm font-semibold text-health-navy">
+                <h2 className="text-sm font-bold text-health-navy">
                   {selectedPatient ? selectedPatient.name : "Patient history"}
                 </h2>
                 {selectedPatient && (
-                  <p className="text-[11px] text-gray-500 mt-0.5">
-                    CIN <span className="font-mono text-health-blue">{selectedPatient.cin}</span>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    CIN <code className="font-mono font-bold text-health-blue">{selectedPatient.cin}</code>
                     {selectedPatient.history?.length > 0 && (
-                      <span> · {selectedPatient.history.length} visit{selectedPatient.history.length !== 1 ? "s" : ""}</span>
+                      <span> · <span className="stat-pill-blue inline-flex px-1.5">{selectedPatient.history.length} visit{selectedPatient.history.length !== 1 ? "s" : ""}</span></span>
                     )}
                   </p>
                 )}
@@ -562,28 +573,12 @@ const Patients = () => {
               <div className="flex items-center gap-1">
                 {selectedPatient && !isEditPatient && !historyEditForm && (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPatientEditForm(patientToEditForm(selectedPatient));
-                        setIsEditPatient(true);
-                      }}
-                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border border-health-blue text-health-blue hover:bg-health-ice/40"
-                    >
-                      Edit patient
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => requestDeletePatient(selectedPatient)}
-                      disabled={isDeletingPatient}
-                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-40"
-                    >
-                      Delete
-                    </button>
+                    <button type="button" onClick={() => { setPatientEditForm(patientToEditForm(selectedPatient)); setIsEditPatient(true); }} className="btn-outline text-[11px] py-1.5 px-2.5">Edit patient</button>
+                    <button type="button" onClick={() => requestDeletePatient(selectedPatient)} disabled={isDeletingPatient} className="btn-danger text-[11px] py-1.5 px-2.5">Delete</button>
                   </>
                 )}
-                <button type="button" onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-1" aria-label="Close">
-                  <FaTimes />
+                <button type="button" onClick={closeModal} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors ml-1" aria-label="Close">
+                  <FaTimes className="text-xs" />
                 </button>
               </div>
             </div>

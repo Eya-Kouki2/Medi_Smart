@@ -362,6 +362,28 @@ const deletePatient = async (req, res) => {
     }
 };
 
+/* Returns patients with full history for reporting / statistics */
+const getPatientsWithStats = async (req, res) => {
+    try {
+        if (!req.userAreaId) {
+            return res.status(400).json({ success: false, message: 'No area linked to this account' });
+        }
+
+        const patients = await Patient.find({
+            areaId: req.userAreaId,
+            isActive: true,
+        }).sort({ name: 1 });
+
+        res.status(200).json({ success: true, patients });
+    } catch (error) {
+        console.error('Error in getPatientsWithStats', error);
+        if (isMongoConnectionError(error)) {
+            return res.status(503).json({ success: false, message: mongoConnectionMessage });
+        }
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getPatients,
     getPatient,
@@ -370,4 +392,6 @@ module.exports = {
     addPatientHistory,
     updatePatientHistory,
     deletePatient,
+    getPatientsWithStats,
 };
+

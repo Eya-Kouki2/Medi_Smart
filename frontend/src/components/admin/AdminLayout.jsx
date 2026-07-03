@@ -47,8 +47,13 @@ const AdminLayout = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-xs text-gray-500">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-main-bg">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-health-blue/10 flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-health-blue border-t-transparent rounded-full animate-spin" />
+          </div>
+          <p className="text-xs text-slate-400 font-medium">Loading MediSmart Hub…</p>
+        </div>
       </div>
     );
   }
@@ -58,9 +63,9 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-main-bg">
       <Sidebar user={user} onLogout={handleLogout} />
-      <main className="ml-56 min-h-screen p-5 overflow-auto min-w-0">
+      <main className="ml-56 min-h-screen p-6 sm:p-8 overflow-auto min-w-0">
         <Outlet context={{ user, refreshUser }} />
       </main>
     </div>
