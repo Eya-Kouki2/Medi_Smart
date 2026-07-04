@@ -10,7 +10,7 @@ const {
 
 const router = express.Router();
 
-router.get('/', verifyToken, requireRole('admin'), getDiseaseClasses);
+router.get('/', verifyToken, requireRole('admin', 'nurses'), getDiseaseClasses);
 router.post('/', verifyToken, requireRole('admin'), createDiseaseClass);
 router.put('/:id', verifyToken, requireRole('admin'), updateDiseaseClass);
 router.delete('/:id', verifyToken, requireRole('admin'), deleteDiseaseClass);

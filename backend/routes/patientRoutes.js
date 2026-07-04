@@ -14,13 +14,13 @@ const {
 
 const router = express.Router();
 
-router.get('/stats', verifyToken, requireRole('admin'), getPatientsWithStats);
-router.get('/', verifyToken, requireRole('admin'), getPatients);
-router.get('/:id', verifyToken, requireRole('admin'), getPatient);
-router.post('/', verifyToken, requireRole('admin'), createPatient);
-router.put('/:id', verifyToken, requireRole('admin'), updatePatient);
-router.post('/:id/history', verifyToken, requireRole('admin'), addPatientHistory);
-router.put('/:id/history/:historyId', verifyToken, requireRole('admin'), updatePatientHistory);
+router.get('/stats', verifyToken, requireRole('admin', 'nurses'), getPatientsWithStats);
+router.get('/', verifyToken, requireRole('admin', 'nurses'), getPatients);
+router.get('/:id', verifyToken, requireRole('admin', 'nurses'), getPatient);
+router.post('/', verifyToken, requireRole('admin', 'nurses'), createPatient);
+router.put('/:id', verifyToken, requireRole('admin', 'nurses'), updatePatient);
+router.post('/:id/history', verifyToken, requireRole('admin', 'nurses'), addPatientHistory);
+router.put('/:id/history/:historyId', verifyToken, requireRole('admin', 'nurses'), updatePatientHistory);
 router.delete('/:id', verifyToken, requireRole('admin'), deletePatient);
 
 module.exports = router;

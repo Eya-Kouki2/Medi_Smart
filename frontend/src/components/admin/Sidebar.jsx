@@ -2,19 +2,20 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { FaHeartbeat, FaCopy, FaCheck, FaSignOutAlt } from "react-icons/fa";
 
-const navItems = [
-  { to: "/admin",                label: "Dashboard",        icon: "📊", end: true  },
-  { to: "/admin/patients",       label: "Patients",         icon: "👥"             },
-  { to: "/admin/triage",         label: "Smart Triage",     icon: "🩺"             },
-  { to: "/admin/pharmacy",       label: "Pharmacy Monitor", icon: "💊"             },
-  { to: "/admin/disease-classes",label: "Disease Classes",  icon: "🦠"             },
-  { to: "/admin/reports",        label: "Reports",          icon: "📜"             },
-  { to: "/admin/profile",        label: "Profile",          icon: "👤"             },
+const ALL_NAV_ITEMS = [
+  { key: "dashboard",      label: "Dashboard",        icon: "📊", end: true, adminOnly: false },
+  { key: "patients",       label: "Patients",         icon: "👥",            adminOnly: false },
+  { key: "triage",         label: "Smart Triage",     icon: "🩺",            adminOnly: false },
+  { key: "pharmacy",       label: "Pharmacy Monitor", icon: "💊",            adminOnly: false },
+  { key: "disease-classes",label: "Disease Classes",  icon: "🦠",            adminOnly: true  },
+  { key: "reports",        label: "Reports",          icon: "📜",            adminOnly: true  },
+  { key: "profile",        label: "Profile",          icon: "👤",            adminOnly: false },
 ];
 
-const Sidebar = ({ user, onLogout }) => {
+const Sidebar = ({ user, onLogout, role = "admin" }) => {
   const [copied, setCopied] = useState(false);
   const areaCode = user?.area?.code;
+  const base = role === "nurses" ? "/nurse" : "/admin";
 
   const copyCode = () => {
     if (!areaCode) return;
@@ -22,6 +23,13 @@ const Sidebar = ({ user, onLogout }) => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const navItems = ALL_NAV_ITEMS
+    .filter((item) => role === "admin" || !item.adminOnly)
+    .map((item) => ({
+      ...item,
+      to: item.key === "dashboard" ? base : `${base}/${item.key}`,
+    }));
 
   return (
     <aside
@@ -38,14 +46,24 @@ const Sidebar = ({ user, onLogout }) => {
             <p className="text-sm font-bold text-white leading-tight">MediSmart Hub</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-dot shrink-0" />
-              <p className="text-[10px] text-blue-200/80 font-medium">Clinical Platform</p>
+              <p className="text-[10px] text-blue-200/80 font-medium">
+                {role === "nurses" ? "Nurse Portal" : "Clinical Platform"}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
+      {/* ── Role badge ──────────────────────────── */}
+      {role === "nurses" && (
+        <div className="mx-3 mt-3 px-3 py-2 rounded-xl bg-white/10 border border-white/15">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-blue-200/70">Role</p>
+          <p className="text-xs font-bold text-health-cyan mt-0.5">Nurse</p>
+        </div>
+      )}
+
       {/* ── Area code badge ────────────────────── */}
-      {user?.role === "admin" && areaCode && (
+      {role === "admin" && areaCode && (
         <div className="mx-3 mt-3 px-3 py-2.5 rounded-xl bg-white/10 border border-white/15">
           <p className="text-[9px] font-bold uppercase tracking-widest text-blue-200/70 mb-1">Area Code</p>
           <div className="flex items-center justify-between gap-2">
@@ -104,3 +122,4 @@ const Sidebar = ({ user, onLogout }) => {
 };
 
 export default Sidebar;
+

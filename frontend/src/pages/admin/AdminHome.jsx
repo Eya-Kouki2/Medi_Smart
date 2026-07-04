@@ -172,6 +172,7 @@ const AdminHome = () => {
   };
 
   const area = user?.area;
+  const basePath = user?.role === "nurses" ? "/nurse" : "/admin";
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -491,7 +492,7 @@ const AdminHome = () => {
                 {stats.recentTriages.length > 0 && (
                   <div className="mt-4 pt-3 border-t border-slate-50 flex justify-between items-center text-[10px] font-medium text-slate-400">
                     <span>Showing {stats.recentTriages.length} cases</span>
-                    <Link to="/admin/patients" className="text-health-blue hover:underline font-bold">View All Cases</Link>
+                    <Link to={`${basePath}/patients`} className="text-health-blue hover:underline font-bold">View All Cases</Link>
                   </div>
                 )}
               </div>
@@ -509,9 +510,15 @@ const AdminHome = () => {
                   <h3 className="text-[13px] font-bold text-health-navy flex items-center gap-2 group-hover/title:text-health-blue transition-colors">
                     <FaShieldAlt className="text-slate-600 group-hover/title:text-health-blue transition-colors" /> Active Classes
                   </h3>
-                  <button className="text-[10px] font-bold text-health-blue hover:underline bg-health-ice px-2 py-0.5 rounded-full">
-                    View All
-                  </button>
+                  {user?.role === "admin" ? (
+                    <Link to={`${basePath}/disease-classes`} onClick={(e) => e.stopPropagation()} className="text-[10px] font-bold text-health-blue hover:underline bg-health-ice px-2 py-0.5 rounded-full">
+                      Manage
+                    </Link>
+                  ) : (
+                    <button className="text-[10px] font-bold text-health-blue hover:underline bg-health-ice px-2 py-0.5 rounded-full">
+                      View All
+                    </button>
+                  )}
                 </div>
                 
                 <div className="flex-1 overflow-y-auto pr-1 space-y-3">
@@ -569,25 +576,39 @@ const AdminHome = () => {
                 </h3>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <Link to="/admin/triage" className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-blue-50 bg-blue-50/60 hover:bg-blue-100/50 transition-colors text-center group">
+                  <Link to={`${basePath}/triage`} className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-blue-50 bg-blue-50/60 hover:bg-blue-100/50 transition-colors text-center group">
                     <FaUserMd className="text-xl text-blue-500 group-hover:scale-110 transition-transform" />
                     <span className="text-[10px] font-bold text-blue-700 leading-tight">+ New Patient</span>
                   </Link>
 
-                  <Link to="/admin/triage" className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-emerald-50 bg-emerald-50/60 hover:bg-emerald-100/50 transition-colors text-center group">
+                  <Link to={`${basePath}/triage`} className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-emerald-50 bg-emerald-50/60 hover:bg-emerald-100/50 transition-colors text-center group">
                     <FaClipboardList className="text-xl text-emerald-500 group-hover:scale-110 transition-transform" />
                     <span className="text-[10px] font-bold text-emerald-700 leading-tight">New Consultation</span>
                   </Link>
 
-                  <Link to="/admin/disease-classes" className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-purple-50 bg-purple-50/60 hover:bg-purple-100/50 transition-colors text-center group">
-                    <FaPlus className="text-xl text-purple-500 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-bold text-purple-700 leading-tight">Add Disease Category</span>
-                  </Link>
-
-                  <Link to="/admin/reports" className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-amber-50 bg-amber-50/60 hover:bg-amber-100/50 transition-colors text-center group">
-                    <FaChartLine className="text-xl text-amber-500 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-bold text-amber-700 leading-tight">View Reports</span>
-                  </Link>
+                  {user?.role === "admin" ? (
+                    <>
+                      <Link to={`${basePath}/disease-classes`} className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-purple-50 bg-purple-50/60 hover:bg-purple-100/50 transition-colors text-center group">
+                        <FaPlus className="text-xl text-purple-500 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold text-purple-700 leading-tight">Add Disease Category</span>
+                      </Link>
+                      <Link to={`${basePath}/reports`} className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-amber-50 bg-amber-50/60 hover:bg-amber-100/50 transition-colors text-center group">
+                        <FaChartLine className="text-xl text-amber-500 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold text-amber-700 leading-tight">View Reports</span>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link to={`${basePath}/patients`} className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-purple-50 bg-purple-50/60 hover:bg-purple-100/50 transition-colors text-center group">
+                        <FaUsers className="text-xl text-purple-500 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold text-purple-700 leading-tight">Patient List</span>
+                      </Link>
+                      <Link to={`${basePath}/pharmacy`} className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-amber-50 bg-amber-50/60 hover:bg-amber-100/50 transition-colors text-center group">
+                        <FaChartLine className="text-xl text-amber-500 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold text-amber-700 leading-tight">Pharmacy Monitor</span>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
 

@@ -11,6 +11,6 @@ const router = express.Router();
 
 router.post('/create', verifyToken, requireRole('admin'), createArea);
 router.get('/my-area', verifyToken, getMyArea);
-router.get('/staff', verifyToken, requireRole('admin'), getAreaStaff);
+router.get('/staff', verifyToken, requireRole('admin', 'nurses'), getAreaStaff);
 
 module.exports = router;

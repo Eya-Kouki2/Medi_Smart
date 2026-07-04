@@ -8,6 +8,7 @@ import VerifyResetCode from "../pages/auth/VerifyResetCode";
 import ResetPassword from "../pages/auth/ResetPassword";
 import AdminSetup from "../pages/admin/AdminSetup";
 import AdminLayout from "../components/admin/AdminLayout";
+import NurseLayout from "../components/admin/NurseLayout";
 import AdminHome from "../pages/admin/AdminHome";
 import Patients from "../pages/admin/Patients";
 import Triage from "../pages/admin/Triage";
@@ -18,7 +19,6 @@ import AuditLog from "../pages/admin/AuditLog";
 import Settings from "../pages/admin/Settings";
 import Profile from "../pages/admin/Profile";
 import DiseaseClasses from "../pages/admin/DiseaseClasses";
-import StaffDashboard from "../pages/staff/StaffDashboard";
 
 const AppRoutes = () => (
   <Routes>
@@ -28,6 +28,8 @@ const AppRoutes = () => (
     <Route path="/resend-code" element={<ResendVerification />} />
     <Route path="/login" element={<Login />} />
     <Route path="/admin/setup" element={<AdminSetup />} />
+
+    {/* ── Admin Routes ── */}
     <Route path="/admin" element={<AdminLayout />}>
       <Route index element={<AdminHome />} />
       <Route path="patients" element={<Patients />} />
@@ -40,10 +42,16 @@ const AppRoutes = () => (
       <Route path="settings" element={<Settings />} />
       <Route path="profile" element={<Profile />} />
     </Route>
-    <Route
-      path="/nurses"
-      element={<StaffDashboard expectedRole="nurses" title="Nurses Dashboard" />}
-    />
+
+    {/* ── Nurse Routes ── */}
+    <Route path="/nurse" element={<NurseLayout />}>
+      <Route index element={<AdminHome />} />
+      <Route path="patients" element={<Patients />} />
+      <Route path="triage" element={<Triage />} />
+      <Route path="pharmacy" element={<Pharmacy />} />
+      <Route path="profile" element={<Profile />} />
+    </Route>
+
     <Route path="/forgot-password" element={<ForgotPassword />} />
     <Route path="/reset-password-code" element={<VerifyResetCode />} />
     <Route path="/reset-password" element={<ResetPassword />} />
@@ -51,3 +59,4 @@ const AppRoutes = () => (
 );
 
 export default AppRoutes;
+
