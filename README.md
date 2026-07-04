@@ -1,166 +1,150 @@
-# MediSmart Hub
+# MediSmart Hub 🏥
 
-A full-stack healthcare clinic management platform with role-based authentication, area-based staff onboarding, and an admin dashboard.
+MediSmart Hub is a comprehensive clinical platform designed to streamline healthcare facility management. It offers role-based access for Administrators, Nurses, Triage staff, and Pharmacy personnel, providing specialized dashboards and tools for each department to manage patient flow, consultations, and medical data efficiently.
 
-## Tech Stack
+## 🌟 Features
 
-| Layer    | Technologies                                      |
-| -------- | ------------------------------------------------- |
-| Frontend | React, Vite, Tailwind CSS, React Router, Axios  |
-| Backend  | Node.js, Express, MongoDB, Mongoose               |
-| Auth     | JWT (httpOnly cookies), bcryptjs                |
-| Email    | Nodemailer (Gmail)                                |
+*   **Role-Based Access Control (RBAC):** Secure access tailored for different roles (`admin`, `nurses`, `triage`, `pharmacy`).
+*   **Area Management:** Admins create clinic areas and receive shareable codes (`MSH-XXXXXX`) for staff onboarding.
+*   **Dynamic Dashboards:** Real-time analytics, active class tracking, and quick actions specific to the logged-in user's role.
+*   **Smart Triage System:** Efficiently process new patients and manage consultations.
+*   **Patient Management:** Comprehensive patient profiles, medical history tracking, and cohort visualization.
+*   **Disease Classifications:** Manage and categorize disease classes (Admin only) to assist in triage and patient placement.
+*   **Pharmacy Monitor:** Track pharmacy operations and medication flows.
+*   **Secure Authentication:** Features include email verification, password reset flows, and secure session management using HTTP-only cookies and JWTs.
+*   **Modern UI/UX:** A premium, responsive design built with React, Vite, and Tailwind CSS.
 
-## Features
+## 💻 Tech Stack
 
-- **User authentication** — signup, login, logout, email verification
-- **Password reset** — 6-digit code sent by email, code verification, then new password
-- **Role-based access** — `admin` and `nurses`
-- **Area management** — admins create a clinic area and receive a shareable code (`MSH-XXXXXX`)
-- **Staff onboarding** — nurses sign up with a valid area code
-- **Admin dashboard** — sidebar navigation, staff list, analytics, and placeholder modules (patients, triage, pharmacy, reports, audit log, settings)
-- **Nurses dashboard** — dedicated view for staff members
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React, Vite, Tailwind CSS, React Router, Axios |
+| **Backend** | Node.js, Express, MongoDB, Mongoose |
+| **Auth** | JWT (httpOnly cookies), bcryptjs |
+| **Email** | Nodemailer (Gmail) |
 
-## Project Structure
+## 🔐 Role Capabilities
 
-```
-├── backend/
-│   ├── config/          # Database connection
-│   ├── controllers/     # Route handlers
-│   ├── middleware/      # JWT & role guards
-│   ├── models/          # Mongoose schemas
-│   ├── routes/          # API routes
-│   ├── mailer/          # Email templates & sending
-│   ├── utils/           # Helpers
-│   └── server.js
-├── frontend/
-│   └── src/
-│       ├── api/         # Axios client
-│       ├── components/
-│       │   ├── auth/    # Auth UI components
-│       │   └── admin/   # Admin layout & sidebar
-│       ├── pages/
-│       │   ├── auth/    # Login, signup, reset password, etc.
-│       │   ├── admin/   # Admin dashboard pages
-│       │   └── staff/   # Nurses dashboard
-│       └── routes/      # App routing
-├── .env.example
-└── package.json
-```
+| Feature | Admin | Nurse | Triage | Pharmacy |
+| :--- | :---: | :---: | :---: | :---: |
+| **Dashboard** | ✅ | ✅ | 🚧 | 🚧 |
+| **Patients** | ✅ (Full) | ✅ (Read/Update) | 🚧 | 🚧 |
+| **Smart Triage** | ✅ | ✅ | ✅ | ❌ |
+| **Pharmacy** | ✅ | ✅ | ❌ | ✅ |
+| **Disease Classes**| ✅ (Manage) | ✅ (Read Only) | ❌ | ❌ |
+| **Reports** | ✅ | ❌ | ❌ | ❌ |
+| **Area Staff** | ✅ | ✅ (Read Only) | ❌ | ❌ |
 
-## Prerequisites
+*(Note: 🚧 denotes features currently in development or planned for specific roles)*
 
-- [Node.js](https://nodejs.org/) (v18+ recommended)
-- [MongoDB](https://www.mongodb.com/) (local or Atlas)
-- A Gmail account with an [App Password](https://support.google.com/accounts/answer/185833) for Nodemailer
+## 🚀 Getting Started
 
-## Getting Started
+### Prerequisites
 
-### 1. Clone and install dependencies
+*   [Node.js](https://nodejs.org/) (v18+ recommended)
+*   [MongoDB](https://www.mongodb.com/) (local or Atlas)
+*   A Gmail account with an [App Password](https://support.google.com/accounts/answer/185833) for Nodemailer
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Eya-Kouki2/Medi_Smart.git
+    cd "ies nodes and hubs"
+    ```
+
+2.  **Backend Setup:**
+    ```bash
+    cd backend
+    npm install
+    ```
+    *   Create a `.env` file in the `backend` directory (see Environment Variables below).
+    *   Start the development server:
+        ```bash
+        npm run dev
+        ```
+
+3.  **Frontend Setup:**
+    ```bash
+    cd ../frontend
+    npm install
+    ```
+    *   Start the Vite development server:
+        ```bash
+        npm run dev
+        ```
+
+4.  **Access the Application:**
+    Open your browser and navigate to `http://localhost:5173`.
+    Backend API runs on `http://localhost:5000`.
+
+## ⚙️ Environment Variables
+
+### Backend (`backend/.env`)
+
+Copy the `.env.example` file and fill in your values:
 
 ```bash
-git clone <your-repo-url>
-cd <project-folder>
-
-# Backend dependencies (root)
-npm install
-
-# Frontend dependencies
-cd frontend
-npm install
-cd ..
+cp backend/.env.example backend/.env
 ```
 
-### 2. Environment variables
+| Variable | Description |
+| :--- | :--- |
+| `PORT` | Backend port (default: `5000`) |
+| `NODE_ENV` | `development` or `production` |
+| `MONGO_URI` | MongoDB connection string |
+| `JWT_SECRET` | Long random string for signing tokens |
+| `CLIENT_URL` | Frontend URL (e.g. `http://localhost:5173`) |
+| `EMAIL_USER` | Gmail address used to send emails |
+| `EMAIL_PASS` | Gmail app password |
+| `EMAIL_NAME` | Display name in outgoing emails |
 
-Copy the example file and fill in your values:
+### Frontend
 
-```bash
-cp .env.example .env
-```
-
-| Variable      | Description                                      |
-| ------------- | ------------------------------------------------ |
-| `PORT`        | Backend port (default: `5000`)                   |
-| `NODE_ENV`    | `development` or `production`                    |
-| `MONGO_URI`   | MongoDB connection string                        |
-| `JWT_SECRET`  | Long random string for signing tokens            |
-| `CLIENT_URL`  | Frontend URL (e.g. `http://localhost:5173`)      |
-| `EMAIL_USER`  | Gmail address used to send emails                |
-| `EMAIL_PASS`  | Gmail app password                               |
-| `EMAIL_NAME`  | Display name in outgoing emails                  |
-
-Optional frontend variable (create `frontend/.env` if needed):
+The frontend uses an Axios instance configured to point to `http://localhost:5000/api` by default. If needed, you can create a `frontend/.env` file:
 
 ```env
 VITE_API_URL=http://localhost:5000
 ```
 
-### 3. Run the application
+## 📁 Project Structure
 
-Open two terminals:
-
-**Backend** (from project root):
-
-```bash
-npm run dev
+```text
+├── backend/
+│   ├── config/          # Database connection & configurations
+│   ├── controllers/     # Route handlers (Auth, Patients, Areas, etc.)
+│   ├── mailer/          # Email templates & sending utilities
+│   ├── middleware/      # JWT & role guards
+│   ├── models/          # Mongoose schemas (User, Patient, DiseaseClass, etc.)
+│   ├── routes/          # API routes
+│   ├── utils/           # Helper functions
+│   └── server.js        # Entry point for the Express application
+├── frontend/
+│   ├── public/          # Static assets
+│   └── src/
+│       ├── api/         # Axios client
+│       ├── assets/      # Images, global styles
+│       ├── components/  # Reusable UI components (Auth, Admin Layouts, Sidebar)
+│       ├── constants/   # Global constants
+│       ├── hooks/       # Custom React hooks
+│       ├── pages/       # Route components (AdminHome, Login, Signup, Patients)
+│       ├── routes/      # React Router configuration (AppRoutes.jsx)
+│       ├── utils/       # Frontend helper functions (getDashboardPath, etc.)
+│       ├── App.jsx      # Root React component
+│       ├── main.jsx     # React DOM rendering entry point
+│       └── index.css    # Main stylesheet including Tailwind directives
+├── .env.example
+└── package.json
 ```
 
-**Frontend** (from `frontend/`):
+## 🌐 API Endpoints Overview
 
-```bash
-npm run dev
-```
+*   **Auth** (`/api/auth`): Signup, login, logout, check-auth, verify-email, password reset flow.
+*   **Areas** (`/api/areas`): Create area, get my area, get staff list.
+*   **Patients** (`/api/patients`): CRUD operations for patients and their medical history/triage.
+*   **Disease Classes** (`/api/disease-classes`): Manage disease categories for triage.
 
-- Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:5000`
-
-## User Roles
-
-### Admin
-
-1. Sign up as **Admin** (no area code required).
-2. After login, create a clinic **area** on the dashboard.
-3. Copy the generated area code and share it with nurses.
-4. Manage staff and view analytics from the admin sidebar.
-
-### Nurses
-
-1. Sign up as **Nurses** and enter the area code from your admin.
-2. Verify your email with the 6-digit code sent to your inbox.
-3. Log in to access the nurses dashboard.
-
-## API Endpoints
-
-### Auth — `/api/auth`
-
-| Method | Endpoint                    | Description              |
-| ------ | --------------------------- | ------------------------ |
-| POST   | `/signup`                   | Register a new user      |
-| POST   | `/login`                    | Log in                   |
-| POST   | `/logout`                   | Log out                  |
-| GET    | `/check-auth`               | Get current user         |
-| POST   | `/verify-email`             | Verify email with code   |
-| POST   | `/resend-verification-email`| Resend verification code |
-| POST   | `/forgot-password`          | Send password reset code |
-| POST   | `/verify-reset-code`        | Validate reset code      |
-| POST   | `/reset-password`           | Set new password         |
-
-### Areas — `/api/areas`
-
-| Method | Endpoint   | Access | Description          |
-| ------ | ---------- | ------ | -------------------- |
-| POST   | `/create`  | Admin  | Create clinic area   |
-| GET    | `/my-area` | Auth | Get linked area      |
-| GET    | `/staff`   | Admin  | List area staff      |
-
-## Password Reset Flow
-
-1. **Forgot password** — user enters email and receives a 6-digit code.
-2. **Enter code** — user submits email + code on `/reset-password-code`.
-3. **New password** — if the code is valid, user sets a new password on `/reset-password`.
-
-## Production Build
+## 🛠️ Production Build
 
 ```bash
 cd frontend
@@ -169,6 +153,5 @@ npm run build
 
 Serve the `frontend/dist` folder with any static host and point `CLIENT_URL` and `VITE_API_URL` to your production URLs.
 
-## License
-
-ISC
+---
+*Built by the MediSmart Team.*
