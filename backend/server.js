@@ -6,6 +6,7 @@ const router = require('./routes/authRoutes');
 const areaRouter = require('./routes/areaRoutes');
 const diseaseClassRouter = require('./routes/diseaseClassRoutes');
 const patientRouter = require('./routes/patientRoutes');
+const mlRouter = require('./routes/mlRoutes');
 const cors = require('cors');
 
 dotenv.config();
@@ -36,6 +37,7 @@ app.use('/api/auth', router)
 app.use('/api/areas', areaRouter)
 app.use('/api/disease-classes', diseaseClassRouter)
 app.use('/api/patients', patientRouter)
+app.use('/api/ml', mlRouter)
 
 app.listen(port, () => {
     connectDB()

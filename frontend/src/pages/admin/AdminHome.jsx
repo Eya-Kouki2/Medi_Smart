@@ -4,7 +4,7 @@ import { useOutletContext, Link } from "react-router-dom";
 import {
   FaUsers, FaUserMd, FaExclamationTriangle, FaCog,
   FaCheckCircle, FaBell, FaInfoCircle, FaPlus, FaClipboardList,
-  FaChartLine, FaVirus, FaChevronRight, FaShieldAlt
+  FaChartLine, FaVirus, FaChevronRight, FaShieldAlt, FaCalendarAlt
 } from "react-icons/fa";
 import { getInitials } from "../../utils/getInitials";
 import { getMaladieLabel } from "../../constants/maladies";
@@ -193,7 +193,16 @@ const AdminHome = () => {
         setIsLoading(false);
       }
     };
+
     loadDashboard();
+
+    // Poll every 10 seconds to keep room capacities live
+    const interval = setInterval(loadDashboard, 10000);
+    window.addEventListener("alerts-updated", loadDashboard);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("alerts-updated", loadDashboard);
+    };
   }, [user?.area]);
 
   /* ─── Derived Statistics ─────────────────────────────────── */
@@ -277,6 +286,14 @@ const AdminHome = () => {
     };
   }, [patients]);
 
+  const fullRooms = useMemo(() => {
+    return diseaseClasses.filter((room) => {
+      const officialPatients = getPatientsInClass(room.placeCode).length;
+      const kioskPatients = room.currentPatients || 0;
+      return (officialPatients + kioskPatients) >= (room.maxPatients || 1);
+    });
+  }, [diseaseClasses, patients]);
+
   if (!area) {
     return (
       <div className="w-full">
@@ -296,12 +313,27 @@ const AdminHome = () => {
           <h1 className="text-[26px] font-black text-health-navy tracking-tight leading-none mb-1.5">Dashboard</h1>
           <p className="text-xs text-slate-500 font-medium">Welcome back, Admin! Here's what's happening today.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="bg-white border border-slate-200 rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm">
-            <FaCheckCircle className="text-health-blue text-[15px]" />
-            <div>
-              <p className="text-[11px] font-bold text-health-navy leading-tight">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-              <p className="text-[9px] text-slate-400 font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long' })}, {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+        <div className="flex items-stretch gap-3">
+          <Link to="/admin/alerts" className={`relative flex items-center justify-center gap-2 px-5 h-12 border rounded-xl transition-all shadow-sm font-bold text-sm ${fullRooms.length > 0 ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+            <FaExclamationTriangle className={fullRooms.length > 0 ? "text-red-600 animate-pulse" : "text-slate-400"} />
+            Alerts
+            {fullRooms.length > 0 && (
+              <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white font-black text-xs ring-[3px] ring-white shadow-sm">
+                {fullRooms.length}
+              </span>
+            )}
+          </Link>
+          <div className="bg-white border border-slate-200 rounded-xl px-4 h-12 flex items-center gap-3 shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-health-blue/10 text-health-blue">
+              <FaCalendarAlt className="text-sm" />
+            </div>
+            <div className="flex flex-col justify-center">
+              <p className="text-[13px] font-extrabold text-slate-800 leading-none mb-1">
+                {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </p>
+              <p className="text-[10px] text-slate-500 font-bold leading-none">
+                {new Date().toLocaleDateString('en-US', { weekday: 'long' })}, {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+              </p>
             </div>
           </div>
         </div>
@@ -313,7 +345,7 @@ const AdminHome = () => {
         </div>
       ) : (
         <>
-          {/* ── Top Metrics Row ── */}
+          {/* ── KPI STATS ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
             {/* Card 1 */}
@@ -521,46 +553,66 @@ const AdminHome = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-1 space-y-3">
-                  {diseaseClasses.length > 0 ? diseaseClasses.map((item) => (
-                    <div
-                      key={item._id}
-                      onClick={() => setSelectedClassForPatients(item)}
-                      className="p-3 rounded-[14px] bg-slate-50/50 hover:bg-slate-50 transition-all border border-slate-100 hover:border-health-blue/20 flex flex-col gap-2 cursor-pointer hover:shadow-sm"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ml-auto ${item.severity === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' :
-                          item.severity === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
-                            item.severity === 'moderate' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                              'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                          }`}>
-                          <span className={`w-1 h-1 rounded-full ${item.severity === 'critical' ? 'bg-red-500 animate-pulse' :
-                            item.severity === 'high' ? 'bg-orange-500' :
-                              item.severity === 'moderate' ? 'bg-amber-500' :
-                                'bg-emerald-500'
-                            }`}></span>
-                          {item.severity.toUpperCase()}
-                        </span>
-                      </div>
+                  {diseaseClasses.length > 0 ? diseaseClasses.map((item) => {
+                    const officialPatients = getPatientsInClass(item.placeCode).length;
+                    const kioskPatients = item.currentPatients || 0;
+                    const totalPatients = officialPatients + kioskPatients;
+                    const isFull = totalPatients >= (item.maxPatients || 1);
 
-                      <div className="space-y-2 mt-2 px-1">
-                        <div className="flex items-center justify-between text-xs border-b border-slate-100/60 pb-2">
-                          <span className="font-semibold text-slate-400 text-[11px]">Room</span>
-                          <span className="font-black text-health-blue">Room #{item.placeCode}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs pb-1">
-                          <span className="font-semibold text-slate-400 text-[11px]">Target Condition</span>
-                          <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                            <FaVirus className="text-indigo-400 shrink-0" /> {getMaladieLabel(item.maladie)}
+                    return (
+                      <div
+                        key={item._id}
+                        onClick={() => setSelectedClassForPatients(item)}
+                        className={`p-3 rounded-[14px] bg-slate-50/50 hover:bg-slate-50 transition-all border ${isFull ? 'border-red-200 bg-red-50/20' : 'border-slate-100 hover:border-health-blue/20'} flex flex-col gap-2 cursor-pointer hover:shadow-sm relative overflow-hidden`}
+                      >
+                        {isFull && <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>}
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-black text-health-navy text-[13px]">Room #{item.placeCode}</h3>
+                          <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ml-auto ${item.severity === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' :
+                            item.severity === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
+                              item.severity === 'moderate' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                            }`}>
+                            <span className={`w-1 h-1 rounded-full ${item.severity === 'critical' ? 'bg-red-500 animate-pulse' :
+                              item.severity === 'high' ? 'bg-orange-500' :
+                                item.severity === 'moderate' ? 'bg-amber-500' :
+                                  'bg-emerald-500'
+                              }`}></span>
+                            {item.severity.toUpperCase()}
                           </span>
                         </div>
+
+                        <div className="space-y-2.5 mt-1 px-1">
+                          <div className="flex items-center justify-between text-xs border-b border-slate-100/60 pb-1.5">
+                            <span className="font-semibold text-slate-400 text-[10px]">Target</span>
+                            <span className="font-bold text-slate-700 flex items-center gap-1.5 text-[11px]">
+                              <FaVirus className="text-indigo-400 shrink-0" /> {getMaladieLabel(item.maladie)}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-xs border-b border-slate-100/60 pb-1.5">
+                            <span className="font-semibold text-slate-400 text-[10px]">Occupancy</span>
+                            <span className="font-bold text-slate-700 text-[11px]">
+                              {totalPatients} / {item.maxPatients || 1} 
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-xs pb-0.5">
+                            <span className="font-semibold text-slate-400 text-[10px]">Status</span>
+                            {isFull ? (
+                              <span className="font-bold text-red-600 flex items-center gap-1 text-[10px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></span> FULL
+                              </span>
+                            ) : (
+                              <span className="font-bold text-emerald-600 flex items-center gap-1 text-[10px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Available
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      {item.description && (
-                        <p className="text-[10px] text-slate-500 mt-2 line-clamp-2 px-1 pt-1.5 border-t border-dashed border-slate-100">
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
-                  )) : (
+                    );
+                  }) : (
                     <div className="py-8 text-center">
                       <p className="text-xs text-slate-400">No active classes.</p>
                     </div>
@@ -640,46 +692,74 @@ const AdminHome = () => {
             <div className="p-6 overflow-y-auto space-y-4 bg-slate-50/30 max-h-[60vh]">
               {diseaseClasses.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {diseaseClasses.map((item) => (
-                    <div
-                      key={item._id}
-                      onClick={() => setSelectedClassForPatients(item)}
-                      className="p-4 rounded-xl bg-white border border-slate-100 shadow-sm flex flex-col gap-3 cursor-pointer hover:border-health-blue/30 hover:shadow-md transition-all"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ml-auto ${item.severity === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' :
-                          item.severity === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
-                            item.severity === 'moderate' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                              'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                          }`}>
-                          <span className={`w-1 h-1 rounded-full ${item.severity === 'critical' ? 'bg-red-500 animate-pulse' :
-                            item.severity === 'high' ? 'bg-orange-500' :
-                              item.severity === 'moderate' ? 'bg-amber-500' :
-                                'bg-emerald-500'
-                            }`}></span>
-                          {item.severity.toUpperCase()}
-                        </span>
-                      </div>
-
-                      <div className="space-y-2 mt-2 px-1">
-                        <div className="flex items-center justify-between text-xs border-b border-slate-100/60 pb-2">
-                          <span className="font-semibold text-slate-400 text-[11px]">Room</span>
-                          <span className="font-black text-health-blue">Room #{item.placeCode}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs pb-1">
-                          <span className="font-semibold text-slate-400 text-[11px]">Target Condition</span>
-                          <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                            <FaVirus className="text-indigo-400 shrink-0" /> {getMaladieLabel(item.maladie)}
+                  {diseaseClasses.map((item) => {
+                    const officialPatients = getPatientsInClass(item.placeCode).length;
+                    const kioskPatients = item.currentPatients || 0;
+                    const totalPatients = officialPatients + kioskPatients;
+                    const isFull = totalPatients >= (item.maxPatients || 1);
+                    
+                    return (
+                      <div
+                        key={item._id}
+                        onClick={() => setSelectedClassForPatients(item)}
+                        className={`p-4 rounded-xl bg-white border ${isFull ? 'border-red-200' : 'border-slate-100'} shadow-sm flex flex-col gap-3 cursor-pointer hover:border-health-blue/30 hover:shadow-md transition-all relative overflow-hidden`}
+                      >
+                        {isFull && <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>}
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-black text-health-navy text-sm">Room #{item.placeCode}</h3>
+                          <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ml-auto ${item.severity === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' :
+                            item.severity === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
+                              item.severity === 'moderate' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                            }`}>
+                            <span className={`w-1 h-1 rounded-full ${item.severity === 'critical' ? 'bg-red-500 animate-pulse' :
+                              item.severity === 'high' ? 'bg-orange-500' :
+                                item.severity === 'moderate' ? 'bg-amber-500' :
+                                  'bg-emerald-500'
+                              }`}></span>
+                            {item.severity.toUpperCase()}
                           </span>
                         </div>
+
+                        <div className="space-y-2.5 mt-1 px-1">
+                          <div className="flex items-center justify-between text-xs border-b border-slate-100/60 pb-2">
+                            <span className="font-semibold text-slate-400 text-[11px]">Target Condition</span>
+                            <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                              <FaVirus className="text-indigo-400 shrink-0" /> {getMaladieLabel(item.maladie)}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-xs border-b border-slate-100/60 pb-2">
+                            <span className="font-semibold text-slate-400 text-[11px]">Occupancy</span>
+                            <span className="font-bold text-slate-700">
+                              {totalPatients} / {item.maxPatients || 1} 
+                              <span className="text-[9px] text-slate-400 ml-1 font-medium">
+                                ({kioskPatients} waiting)
+                              </span>
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-xs pb-1">
+                            <span className="font-semibold text-slate-400 text-[11px]">Status</span>
+                            {isFull ? (
+                              <span className="font-bold text-red-600 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></span> FULL
+                              </span>
+                            ) : (
+                              <span className="font-bold text-emerald-600 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Available
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {item.description && (
+                          <p className="text-[10px] text-slate-500 mt-1 line-clamp-2 px-1 pt-1.5 border-t border-dashed border-slate-100">
+                            {item.description}
+                          </p>
+                        )}
                       </div>
-                      {item.description && (
-                        <p className="text-[10px] text-slate-500 mt-2 line-clamp-2 px-1 pt-1.5 border-t border-dashed border-slate-100">
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="py-12 text-center text-slate-400 text-xs">

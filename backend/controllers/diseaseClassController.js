@@ -80,7 +80,7 @@ const getDiseaseClasses = async (req, res) => {
 };
 
 const createDiseaseClass = async (req, res) => {
-    const { name, placeCode, description, severity, maladie } = req.body;
+    const { name, placeCode, description, severity, maladie, maxPatients } = req.body;
 
     try {
         if (!req.userAreaId) {
@@ -119,6 +119,7 @@ const createDiseaseClass = async (req, res) => {
             description: description?.trim() || '',
             severity: severity || 'moderate',
             maladie,
+            maxPatients: maxPatients ? Number(maxPatients) : 1,
             areaId: req.userAreaId,
             createdBy: req.userID,
         });
@@ -148,7 +149,7 @@ const createDiseaseClass = async (req, res) => {
 
 const updateDiseaseClass = async (req, res) => {
     const { id } = req.params;
-    const { name, placeCode, description, severity, maladie } = req.body;
+    const { name, placeCode, description, severity, maladie, maxPatients } = req.body;
 
     try {
         const diseaseClass = await DiseaseClass.findOne({
@@ -176,6 +177,7 @@ const updateDiseaseClass = async (req, res) => {
             }
             diseaseClass.maladie = maladie;
         }
+        if (maxPatients !== undefined) diseaseClass.maxPatients = Number(maxPatients);
 
         if (placeCode !== undefined && placeCode !== null && placeCode !== '') {
             if (parsePlaceCode(placeCode) === null) {
@@ -239,9 +241,56 @@ const deleteDiseaseClass = async (req, res) => {
     }
 };
 
+const incrementPatients = async (req, res) => {
+    try {
+        const diseaseClass = await DiseaseClass.findByIdAndUpdate(
+            req.params.id,
+            { $inc: { currentPatients: 1 } },
+            { new: true }
+        );
+        res.status(200).json({ success: true, diseaseClass });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const decrementPatients = async (req, res) => {
+    try {
+        const diseaseClass = await DiseaseClass.findByIdAndUpdate(
+            req.params.id,
+            { $inc: { currentPatients: -1 } },
+            { new: true }
+        );
+        // Prevent negative patients
+        if (diseaseClass.currentPatients < 0) {
+            diseaseClass.currentPatients = 0;
+            await diseaseClass.save();
+        }
+        res.status(200).json({ success: true, diseaseClass });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const resetQueue = async (req, res) => {
+    try {
+        const diseaseClass = await DiseaseClass.findByIdAndUpdate(
+            req.params.id,
+            { currentPatients: 0 },
+            { new: true }
+        );
+        res.status(200).json({ success: true, diseaseClass });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getDiseaseClasses,
     createDiseaseClass,
     updateDiseaseClass,
     deleteDiseaseClass,
+    incrementPatients,
+    decrementPatients,
+    resetQueue,
 };

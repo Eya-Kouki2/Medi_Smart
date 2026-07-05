@@ -1,5 +1,5 @@
 import api from "../../api/axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import { predictMaladies, getPriorityFromPrediction } from "../../utils/triagePredict";
 import {
@@ -65,6 +65,8 @@ const DetectSickness = () => {
   const [answers, setAnswers] = useState({});
   const [results, setResults] = useState(null);
   const [sliding, setSliding] = useState(false);   // animation flag
+  const isSubmittingRef = useRef(false);            // prevents double-increment
+  const [allRoomsFull, setAllRoomsFull] = useState(false); // all matching rooms full
 
   /* fullscreen / zoom */
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -95,7 +97,7 @@ const DetectSickness = () => {
   };
 
   /* ── Answer a question (yes = true, no = false) ─────────────── */
-  const answer = (value) => {
+  const answer = async (value) => {
     if (sliding) return;
     const key     = QUESTIONS[current].key;
     const updated = { ...answers, [key]: value };
@@ -108,18 +110,125 @@ const DetectSickness = () => {
         setSliding(false);
       }, 220);
     } else {
-      /* All done → compute */
-      const notes    = buildNotes(updated);
-      const preds    = predictMaladies([], notes);
-      const priority = getPriorityFromPrediction(preds[0]?.confidence ?? 0);
-      const matched  = diseaseClasses.find((c) => c.maladie === preds[0]?.maladie);
-      const yesKeys  = Object.keys(updated).filter((k) => updated[k]);
-      setResults({ predictions: preds, priority, matchedClass: matched, yesKeys });
-      setView("results");
+      /* All done → compute using Python ML model */
+      if (isSubmittingRef.current) return;   // guard against double-fire
+      isSubmittingRef.current = true;
+      try {
+        const features = QUESTIONS.map(q => updated[q.key] ? 1 : 0);
+        const res = await api.post("/api/ml/predict", { features });
+        const mlPrediction = res.data.prediction; // 'AIDS', 'Malaria', 'Tuberculosis', 'safe'
+
+        let maladieKey = "autre";
+        let confidence = 100;
+        let label = "Safe / No Disease Detected";
+
+        if (mlPrediction !== "safe") {
+           // Map ML prediction to our internal disease classes
+           const ML_MALADIE_MAP = {
+             "AIDS": "cida",
+             "Malaria": "malaria",
+             "Tuberculosis": "tuberculos"
+           };
+           maladieKey = ML_MALADIE_MAP[mlPrediction] || mlPrediction.toLowerCase();
+           confidence = 95; // We assign a high confidence for the model prediction
+           label = mlPrediction;
+        }
+
+        let currentDiseaseClasses = diseaseClasses;
+        let currentPatients = [];
+        try {
+          const [classesRes, patientsRes] = await Promise.all([
+            api.get("/api/disease-classes"),
+            api.get("/api/patients/stats")
+          ]);
+          currentDiseaseClasses = classesRes.data.diseaseClasses || [];
+          currentPatients = patientsRes.data.patients || [];
+          setDiseaseClasses(currentDiseaseClasses);
+        } catch (err) {
+          console.error("Failed to fetch latest data", err);
+        }
+
+        const preds = [{ maladie: maladieKey, label: label, confidence: confidence }];
+        const priority = getPriorityFromPrediction(confidence);
+        
+        // Find all rooms matching the sickness
+        const matchingRooms = currentDiseaseClasses.filter((c) => c.maladie === maladieKey);
+        let matched = matchingRooms.length > 0 ? matchingRooms[0] : undefined;
+
+        // Try to find a room that isn't full yet
+        for (const room of matchingRooms) {
+          const officialPatients = currentPatients.filter((p) => {
+            if (!p.history || p.history.length === 0) return false;
+            const sortedHistory = [...p.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const latestTriage = sortedHistory[0]?.triage;
+            return latestTriage?.suggestedClass?.placeCode === Number(room.placeCode);
+          }).length;
+          
+          const kioskPatients = room.currentPatients || 0;
+          const total = officialPatients + kioskPatients;
+          
+          if (total < (room.maxPatients || 1)) {
+            matched = room; // Found an available room!
+            break;
+          }
+        }
+        // Check if ALL matching rooms are full (no available room found)
+        const allFull = matchingRooms.length > 0 && (
+          matched === matchingRooms[0] &&
+          (() => {
+            const room = matchingRooms[0];
+            const officialPts = currentPatients.filter((p) => {
+              if (!p.history || p.history.length === 0) return false;
+              const sh = [...p.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+              return sh[0]?.triage?.suggestedClass?.placeCode === Number(room.placeCode);
+            }).length;
+            const total = officialPts + (room.currentPatients || 0);
+            return total >= (room.maxPatients || 1);
+          })()
+        );
+
+        // If all rooms full, store a dashboard alert in localStorage
+        if (allFull && maladieKey !== "autre") {
+          const noRoomAlerts = JSON.parse(localStorage.getItem("noRoomAlerts") || "[]");
+          const alreadyExists = noRoomAlerts.some((a) => a.maladie === maladieKey);
+          if (!alreadyExists) {
+            noRoomAlerts.push({
+              id: Date.now(),
+              maladie: maladieKey,
+              label: label,
+              createdAt: new Date().toISOString(),
+            });
+            localStorage.setItem("noRoomAlerts", JSON.stringify(noRoomAlerts));
+          }
+          window.dispatchEvent(new Event("alerts-updated"));
+        }
+
+        setAllRoomsFull(allFull && maladieKey !== "autre");
+        const yesKeys = Object.keys(updated).filter((k) => updated[k]);
+
+        setResults({ predictions: preds, priority, matchedClass: matched, yesKeys });
+        setView("results");
+
+        if (matched) {
+          try {
+            await api.post(`/api/disease-classes/${matched._id}/increment`);
+            window.dispatchEvent(new Event("alerts-updated"));
+          } catch (err) {
+            console.error("Failed to increment room count:", err);
+          }
+        }
+      } catch (err) {
+        console.error("ML prediction error:", err);
+        alert("Failed to run the diagnostic model. Please ensure the backend ML service is running.");
+      } finally {
+        isSubmittingRef.current = false;
+      }
     }
   };
 
   const restart = () => {
+    isSubmittingRef.current = false;
+    setAllRoomsFull(false);
     setAnswers({});
     setCurrent(0);
     setResults(null);
@@ -324,148 +433,77 @@ const DetectSickness = () => {
 
         {/* ══ RESULTS ══════════════════════════════════════════ */}
         {view === "results" && results && (
-          <div className="space-y-4 animate-fade-in">
-
-            {/* Summary banner */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#03045e] to-[#0096c7] flex items-center justify-center shrink-0">
-                  <span className="text-xl">📋</span>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-700">Assessment complete</p>
-                  <p className="text-[11px] text-slate-400">
-                    {results.yesKeys.length} of {QUESTIONS.length} symptoms confirmed
-                  </p>
-                </div>
+          <div className="flex flex-col gap-8 mt-4 animate-fade-in pb-12">
+            
+            {/* 1. PREDICTION CARD */}
+            <div className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm overflow-hidden p-8 sm:p-12">
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-3xl sm:text-4xl font-black text-[#03045e]">
+                  🥇 {results.predictions[0].label}
+                </span>
+                <span className="text-3xl sm:text-4xl font-black text-[#0077b6]">
+                  {results.predictions[0].confidence}%
+                </span>
               </div>
-              <span className={`text-[11px] font-bold px-3.5 py-1.5 rounded-full border uppercase tracking-wider ${results.priority.badge}`}>
-                {results.priority.label}
-              </span>
+              
+              <div className="w-full bg-slate-100 rounded-full h-6 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-1000 ease-out"
+                  style={{
+                    width: `${results.predictions[0].confidence}%`,
+                    background: "linear-gradient(90deg,#03045e,#0096c7)",
+                  }}
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-              {/* LEFT: predictions + confirmed */}
-              <div className="lg:col-span-7 space-y-4">
-
-                {/* Predictions */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2.5"
-                    style={{ background: "linear-gradient(90deg,#f8fafc,#f1f5f9)" }}>
-                    <span>🏆</span>
-                    <h2 className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">
-                      Diagnostic Predictions
-                    </h2>
+            {/* 2. ROOM SUGGESTION CARD */}
+            <div className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm overflow-hidden flex flex-col relative h-full">
+              <div className="absolute top-0 left-0 right-0 h-3" style={{ background: "linear-gradient(90deg,#03045e,#0096c7)" }} />
+              
+              <div className="p-8 sm:p-12 text-center flex-1 flex flex-col justify-center mt-4">
+                {results.matchedClass ? (
+                  <div className="space-y-6">
+                    <p className="text-xl sm:text-2xl font-bold uppercase tracking-widest text-slate-400">
+                      Proceed to Room
+                    </p>
+                    <p className="text-7xl sm:text-9xl font-black text-[#0077b6] drop-shadow-sm">
+                      #{results.matchedClass.placeCode}
+                    </p>
+                    <p className="text-2xl font-bold text-slate-600 mt-6">
+                      Target: {results.matchedClass.name}
+                    </p>
                   </div>
-                  <div className="p-6 space-y-4">
-                    {results.predictions.map((p, idx) => (
-                      <div key={p.maladie} className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs font-semibold">
-                          <span className={idx === 0 ? "text-[#03045e] font-black" : "text-slate-500"}>
-                            {idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : "🥉 "}{p.label}
-                          </span>
-                          <span className={`font-bold ${idx === 0 ? "text-[#0077b6]" : "text-slate-400"}`}>
-                            {p.confidence}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{
-                              width: `${p.confidence}%`,
-                              background: idx === 0
-                                ? "linear-gradient(90deg,#03045e,#0096c7)"
-                                : idx === 1 ? "#94a3b8" : "#cbd5e1",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
+                ) : allRoomsFull ? (
+                  <div className="space-y-6">
+                    <span className="text-6xl sm:text-8xl">⏳</span>
+                    <p className="text-3xl font-black text-amber-500">
+                      All Rooms Are Full
+                    </p>
+                    <p className="text-xl font-semibold text-slate-500 leading-relaxed max-w-md mx-auto">
+                      Please wait a few minutes — a nurse will assist you shortly.
+                    </p>
+                    <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-5 py-3 text-sm font-semibold">
+                      🔔 Staff has been notified
+                    </div>
                   </div>
-                </div>
-
-                {/* Confirmed symptoms */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2.5"
-                    style={{ background: "linear-gradient(90deg,#f8fafc,#f1f5f9)" }}>
-                    <span>✅</span>
-                    <h2 className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Confirmed Symptoms</h2>
+                ) : (
+                  <div className="space-y-6">
+                    <span className="text-6xl sm:text-8xl">🔍</span>
+                    <p className="text-2xl font-bold text-slate-400 leading-relaxed">
+                      No quarantine room is mapped to this condition.
+                    </p>
                   </div>
-                  <div className="p-5">
-                    {results.yesKeys.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {results.yesKeys.map((k) => (
-                          <span key={k}
-                            className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold flex items-center gap-1">
-                            <FaCheckCircle className="text-[9px]" />
-                            {fmt(k)}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-slate-400 text-center py-4">No symptoms confirmed.</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Restart */}
-                <button onClick={restart}
-                  className="btn-outline w-full flex items-center justify-center gap-2 text-xs py-2.5">
-                  <FaRedo className="text-[10px]" /> Restart Assessment
-                </button>
+                )}
               </div>
-
-              {/* RIGHT: room suggestion */}
-              <div className="lg:col-span-5">
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden h-full">
-                  <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg,#03045e,#0096c7)" }} />
-                  <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2.5"
-                    style={{ background: "linear-gradient(90deg,#f8fafc,#f1f5f9)" }}>
-                    <span>🏥</span>
-                    <h2 className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">
-                      Suggested Room
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {results.matchedClass ? (
-                      <div className="space-y-4">
-                        <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 text-center">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Clinic Room</p>
-                          <p className="text-3xl font-black text-[#0077b6]">
-                            #{results.matchedClass.placeCode}
-                          </p>
-                        </div>
-                        <div className="space-y-2.5">
-                          <div className="flex items-start justify-between text-xs gap-2 border-b border-slate-100 pb-2.5">
-                            <span className="text-slate-400 font-semibold flex items-center gap-1 shrink-0">
-                              <FaShieldAlt className="text-[#0077b6] text-[10px]" /> Target Condition
-                            </span>
-                            <span className="font-bold text-slate-700 text-right">{results.matchedClass.name}</span>
-                          </div>
-                          {results.matchedClass.description && (
-                            <p className="text-[11px] text-slate-500 leading-relaxed">
-                              {results.matchedClass.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 space-y-3">
-                        <span className="text-4xl">🔍</span>
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                          No quarantine room is mapped to this condition in your clinic setup.
-                        </p>
-                        <p className="text-[11px] text-slate-300">
-                          Configure rooms in Disease Classes settings.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
             </div>
+
+            {/* RESTART BUTTON */}
+            <button onClick={restart}
+              className="mt-4 mx-auto btn-outline flex items-center justify-center gap-3 text-2xl font-bold py-6 px-12 rounded-2xl hover:bg-slate-50 transition-colors">
+              <FaRedo /> Start New Assessment
+            </button>
+
           </div>
         )}
 

@@ -6,6 +6,9 @@ const {
     createDiseaseClass,
     updateDiseaseClass,
     deleteDiseaseClass,
+    incrementPatients,
+    decrementPatients,
+    resetQueue,
 } = require('../controllers/diseaseClassController');
 
 const router = express.Router();
@@ -14,5 +17,8 @@ router.get('/', verifyToken, requireRole('admin', 'nurses'), getDiseaseClasses);
 router.post('/', verifyToken, requireRole('admin'), createDiseaseClass);
 router.put('/:id', verifyToken, requireRole('admin'), updateDiseaseClass);
 router.delete('/:id', verifyToken, requireRole('admin'), deleteDiseaseClass);
+router.post('/:id/increment', verifyToken, requireRole('admin', 'nurses'), incrementPatients);
+router.post('/:id/decrement', verifyToken, requireRole('admin', 'nurses'), decrementPatients);
+router.post('/:id/reset-queue', verifyToken, requireRole('admin', 'nurses'), resetQueue);
 
 module.exports = router;

@@ -24,6 +24,16 @@ const diseaseClassSchema = mongoose.Schema(
             enum: ['low', 'moderate', 'high', 'critical'],
             default: 'moderate',
         },
+        maxPatients: {
+            type: Number,
+            required: true,
+            default: 1,
+            min: 1,
+        },
+        currentPatients: {
+            type: Number,
+            default: 0,
+        },
         maladie: {
             type: String,
             enum: MALADIE_VALUES,

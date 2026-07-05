@@ -20,6 +20,7 @@ import Settings from "../pages/admin/Settings";
 import Profile from "../pages/admin/Profile";
 import DiseaseClasses from "../pages/admin/DiseaseClasses";
 import DetectSickness from "../pages/admin/DetectSickness";
+import Alerts from "../pages/admin/Alerts";
 
 const AppRoutes = () => (
   <Routes>
@@ -43,6 +44,7 @@ const AppRoutes = () => (
       <Route path="audit-log" element={<AuditLog />} />
       <Route path="settings" element={<Settings />} />
       <Route path="profile" element={<Profile />} />
+      <Route path="alerts" element={<Alerts />} />
     </Route>
 
     {/* ── Nurse Routes ── */}

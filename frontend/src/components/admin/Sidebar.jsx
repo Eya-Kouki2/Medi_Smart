@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import { FaHeartbeat, FaCopy, FaCheck, FaSignOutAlt } from "react-icons/fa";
+import api from "../../api/axios";
 
 const ALL_NAV_ITEMS = [
   { key: "dashboard", label: "Dashboard", icon: "📊", end: true, adminOnly: false },
@@ -8,14 +9,52 @@ const ALL_NAV_ITEMS = [
   { key: "detect-sickness", label: "Detect sickness", icon: "🧬", adminOnly: false },
   { key: "pharmacy", label: "Pharmacy Monitor", icon: "💊", adminOnly: false },
   { key: "disease-classes", label: "Disease Classes", icon: "🦠", adminOnly: true },
+  { key: "alerts", label: "Alerts", icon: "🚨", adminOnly: true },
   { key: "reports", label: "Reports", icon: "📜", adminOnly: true },
   { key: "profile", label: "Profile", icon: "👤", adminOnly: false },
 ];
 
 const Sidebar = ({ user, onLogout, role = "admin" }) => {
   const [copied, setCopied] = useState(false);
+  const [alertCount, setAlertCount] = useState(0);
   const areaCode = user?.area?.code;
   const base = role === "nurses" ? "/nurse" : "/admin";
+
+  useEffect(() => {
+    if (!areaCode) return;
+    const fetchAlerts = async () => {
+      try {
+        const [patientsRes, classesRes] = await Promise.all([
+          api.get("/api/patients/stats"),
+          api.get("/api/disease-classes")
+        ]);
+        const patients = patientsRes.data.patients || [];
+        const classes = classesRes.data.diseaseClasses || [];
+        
+        let count = 0;
+        classes.forEach(room => {
+          const official = patients.filter((p) => {
+            if (!p.history || p.history.length === 0) return false;
+            const sortedHistory = [...p.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const latestTriage = sortedHistory[0]?.triage;
+            return latestTriage?.suggestedClass?.placeCode === Number(room.placeCode);
+          }).length;
+          const kiosk = room.currentPatients || 0;
+          if (official + kiosk >= (room.maxPatients || 1)) count++;
+        });
+        setAlertCount(count + (JSON.parse(localStorage.getItem("noRoomAlerts") || "[]")).length);
+      } catch (e) {
+        // ignore errors silently
+      }
+    };
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 10000);
+    window.addEventListener("alerts-updated", fetchAlerts);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("alerts-updated", fetchAlerts);
+    };
+  }, [areaCode]);
 
   const copyCode = () => {
     if (!areaCode) return;
@@ -85,13 +124,13 @@ const Sidebar = ({ user, onLogout, role = "admin" }) => {
 
       {/* ── Nav items ─────────────────────────── */}
       <nav className="flex-1 px-2 overflow-y-auto space-y-0.5">
-        {navItems.map(({ to, label, icon, end }) => (
+        {navItems.map(({ key, to, label, icon, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 ${isActive
+              `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 ${isActive
                 ? "bg-white/18 text-white shadow-sm border border-white/20"
                 : "text-blue-100/75 hover:bg-white/10 hover:text-white"
               }`
@@ -100,7 +139,12 @@ const Sidebar = ({ user, onLogout, role = "admin" }) => {
             <span className="text-[15px] shrink-0 leading-none w-5 text-center" aria-hidden="true">
               {icon}
             </span>
-            <span className="truncate">{label}</span>
+            <span className="truncate flex-1">{label}</span>
+            {key === "alerts" && alertCount > 0 && (
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+                {alertCount}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
