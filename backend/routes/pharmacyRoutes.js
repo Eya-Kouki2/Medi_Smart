@@ -25,15 +25,27 @@ router.post('/accept', async (req, res) => {
             return res.status(400).json({ error: "Invalid payload format" });
         }
         
-        const docs = medications.map(m => ({
-            drug_name: m.drug_name || "UNKNOWN",
-            strength: m.strength || "N/A",
-            expiry_date: m.expiry_date || "UNKNOWN",
-            inventory_status: m.inventory_status || "UNKNOWN",
-        }));
+        const bulkOps = medications.map(m => {
+            const filter = {
+                drug_name: m.drug_name || "UNKNOWN",
+                strength: m.strength || "N/A",
+                expiry_date: m.expiry_date || "UNKNOWN",
+                inventory_status: m.inventory_status || "UNKNOWN",
+            };
+            return {
+                updateOne: {
+                    filter: filter,
+                    update: { 
+                        $inc: { quantity: m.quantity || 1 },
+                        $setOnInsert: filter // Set these fields if it's a new insert
+                    },
+                    upsert: true
+                }
+            };
+        });
         
-        await Medication.insertMany(docs);
-        res.json({ success: true, count: docs.length });
+        await Medication.bulkWrite(bulkOps);
+        res.json({ success: true, count: medications.length });
     } catch (err) {
         console.error("Failed to accept medications:", err);
         res.status(500).json({ error: "Failed to save to inventory" });

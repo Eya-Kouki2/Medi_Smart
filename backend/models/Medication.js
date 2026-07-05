@@ -10,6 +10,10 @@ const MedicationSchema = new mongoose.Schema({
         type: String,
         default: "N/A",
     },
+    quantity: {
+        type: Number,
+        default: 1,
+    },
     expiry_date: {
         type: String,
         default: "UNKNOWN",

@@ -88,15 +88,37 @@ export default function PharmacyMonitor() {
         timeout: 120000, // 2-min timeout — OCR is slow
       });
 
-      setResults((prev) => [
-        {
-          id: Date.now(),
-          ...data,
-          scanned_at: formatDate(),
-          file_name: file.name,
-        },
-        ...prev,
-      ]);
+      setResults((prev) => {
+        const existingIdx = prev.findIndex(
+          (p) =>
+            p.drug_name === data.drug_name &&
+            p.strength === data.strength &&
+            p.expiry_date === data.expiry_date
+        );
+
+        if (existingIdx !== -1) {
+          // If exists, increment quantity
+          const updated = [...prev];
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            quantity: (updated[existingIdx].quantity || 1) + 1,
+            scanned_at: formatDate(), // Update time to latest scan
+          };
+          return updated;
+        }
+
+        // If new, add with quantity 1
+        return [
+          {
+            id: Date.now(),
+            ...data,
+            quantity: 1,
+            scanned_at: formatDate(),
+            file_name: file.name,
+          },
+          ...prev,
+        ];
+      });
       // NOTE: We no longer auto-fetch inventory here since they aren't saved yet.
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.detail || err.message || "Scan failed";
@@ -284,7 +306,7 @@ export default function PharmacyMonitor() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    {["Drug Name", "Strength", "Expiry", "Status", "Time", ""].map((h) => (
+                    {["Drug Name", "Strength", "Qty", "Expiry", "Status", "Time", ""].map((h) => (
                       <th key={h} className="text-left text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3 whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -312,6 +334,11 @@ export default function PharmacyMonitor() {
                         {/* Strength */}
                         <td className="px-4 py-3">
                           <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-mono font-bold">{row.strength}</span>
+                        </td>
+
+                        {/* Quantity */}
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-1 bg-health-blue/10 text-health-blue rounded-md text-xs font-bold">{row.quantity || 1}</span>
                         </td>
 
                         {/* Expiry */}
@@ -377,7 +404,9 @@ export default function PharmacyMonitor() {
                 <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <h4 className="font-black text-slate-800 text-lg">{drugName}</h4>
-                    <span className="text-xs bg-health-blue text-white font-bold px-2 py-0.5 rounded-full">{items.length} units</span>
+                    <span className="text-xs bg-health-blue text-white font-bold px-2 py-0.5 rounded-full">
+                      {items.reduce((sum, item) => sum + (item.quantity || 1), 0)} units
+                    </span>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
@@ -385,6 +414,7 @@ export default function PharmacyMonitor() {
                     <thead>
                       <tr className="bg-white border-b border-slate-100">
                         <th className="text-left text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-2">Strength</th>
+                        <th className="text-left text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-2">Quantity</th>
                         <th className="text-left text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-2">Expiry</th>
                         <th className="text-left text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-2">Status</th>
                         <th className="text-left text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-2">Scanned On</th>
@@ -399,6 +429,9 @@ export default function PharmacyMonitor() {
                           <tr key={item._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                             <td className="px-4 py-2">
                               <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-mono font-bold">{item.strength}</span>
+                            </td>
+                            <td className="px-4 py-2">
+                              <span className="px-2 py-1 bg-health-blue/10 text-health-blue rounded-md text-xs font-bold">{item.quantity || 1}</span>
                             </td>
                             <td className="px-4 py-2">
                               <div className="flex items-center gap-1.5">
