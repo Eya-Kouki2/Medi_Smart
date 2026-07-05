@@ -1,10 +1,11 @@
 import api from "../../api/axios";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import { predictMaladies, getPriorityFromPrediction } from "../../utils/triagePredict";
 import {
   FaExpand, FaCompress, FaPlus, FaMinus,
   FaShieldAlt, FaRedo, FaCheckCircle, FaTimesCircle,
+  FaMicrophone, FaMicrophoneSlash,
 } from "react-icons/fa";
 
 /* ─── 25 diagnostic questions ───────────────────────────────────
@@ -67,6 +68,12 @@ const DetectSickness = () => {
   const [sliding, setSliding] = useState(false);   // animation flag
   const isSubmittingRef = useRef(false);            // prevents double-increment
   const [allRoomsFull, setAllRoomsFull] = useState(false); // all matching rooms full
+  const [voiceMode, setVoiceMode] = useState(false);       // voice recognition active
+  const [listening, setListening] = useState(false);       // mic currently listening
+  const [voiceStatus, setVoiceStatus] = useState("");      // feedback text
+  const [voiceSelected, setVoiceSelected] = useState(null); // null | true | false
+  const recognizerRef = useRef(null);
+  const answerRef = useRef(null); // store latest answer fn for use inside event handlers
 
   /* fullscreen / zoom */
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -96,6 +103,187 @@ const DetectSickness = () => {
     }
   };
 
+  /* ── Voice Recognition helpers ───────────────────────────────── */
+  const stopVoice = useCallback(() => {
+    recognizerRef.current?.stop();
+    recognizerRef.current?.abort();
+    recognizerRef.current = null;
+    setListening(false);
+    setVoiceStatus("");
+  }, []);
+
+  const listenOnce = useCallback((onAnswer) => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setVoiceStatus("❌ Browser doesn't support voice recognition");
+      return;
+    }
+    const rec = new SpeechRecognition();
+    rec.lang = "fr-FR";
+    rec.interimResults = false;
+    rec.maxAlternatives = 3;
+    recognizerRef.current = rec;
+    setListening(true);
+    setVoiceStatus("🎙️ Listening… say \"Oui\" or \"Non\"");
+
+    rec.onresult = (event) => {
+      setListening(false);
+      const texts = Array.from(event.results[0]).map(a => a.transcript.toLowerCase().trim());
+      const combined = texts.join(" ");
+      console.log("[Voice]", combined);
+      if (/\b(oui|ouais|yes|yeah|si)\b/.test(combined)) {
+        setVoiceStatus("✅ Heard: YES");
+        setVoiceSelected(true);
+        setTimeout(() => { setVoiceSelected(null); onAnswer(true); }, 600);
+      } else if (/\b(non|no|nope|nan)\b/.test(combined)) {
+        setVoiceStatus("❌ Heard: NO");
+        setVoiceSelected(false);
+        setTimeout(() => { setVoiceSelected(null); onAnswer(false); }, 600);
+      } else {
+        setVoiceStatus(`❓ Didn't catch that. Say "Oui" or "Non"`);
+        // retry after a short pause
+        setTimeout(() => listenOnce(onAnswer), 1000);
+      }
+    };
+
+    rec.onerror = (e) => {
+      setListening(false);
+      if (e.error === "no-speech") {
+        setVoiceStatus(`❓ No speech detected. Try again.`);
+        setTimeout(() => listenOnce(onAnswer), 800);
+      } else {
+        setVoiceStatus(`⚠️ Error: ${e.error}`);
+      }
+    };
+
+    rec.start();
+  }, []);
+
+  const stopVoiceMode = useCallback(() => {
+    stopVoice();
+    setVoiceMode(false);
+  }, [stopVoice]);
+
+  // When view changes to quiz with voiceMode, start listening
+  useEffect(() => {
+    if (view === "quiz" && voiceMode) {
+      const timer = setTimeout(() => listenOnce((val) => answerRef.current?.(val)), 600);
+      return () => clearTimeout(timer);
+    }
+    if (view !== "quiz") stopVoice();
+  }, [view, current, voiceMode, listenOnce, stopVoice]);
+
+  // Keep answerRef in sync
+  useEffect(() => {
+    answerRef.current = answer;
+  });
+
+  /* ── Process Prediction (Shared by manual form & kiosk) ─────── */
+  const processPrediction = async (mlPrediction, confidenceMap = null, reportedSymptoms = []) => {
+    let maladieKey = "autre";
+    let confidence = 100;
+    let label = "Safe / No Disease Detected";
+
+    if (mlPrediction !== "safe") {
+        const ML_MALADIE_MAP = {
+          "AIDS": "cida",
+          "Malaria": "malaria",
+          "Tuberculosis": "tuberculos"
+        };
+        maladieKey = ML_MALADIE_MAP[mlPrediction] || mlPrediction.toLowerCase();
+        if (confidenceMap && confidenceMap[mlPrediction]) {
+          confidence = Math.round(confidenceMap[mlPrediction] * 100);
+        } else {
+          confidence = 95;
+        }
+        label = mlPrediction;
+    }
+
+    let currentDiseaseClasses = diseaseClasses;
+    let currentPatients = [];
+    try {
+      const [classesRes, patientsRes] = await Promise.all([
+        api.get("/api/disease-classes"),
+        api.get("/api/patients/stats")
+      ]);
+      currentDiseaseClasses = classesRes.data.diseaseClasses || [];
+      currentPatients = patientsRes.data.patients || [];
+      setDiseaseClasses(currentDiseaseClasses);
+    } catch (err) {
+      console.error("Failed to fetch latest data", err);
+    }
+
+    const preds = [{ maladie: maladieKey, label: label, confidence: confidence }];
+    const priority = getPriorityFromPrediction(confidence);
+    
+    // Find all rooms matching the sickness
+    const matchingRooms = currentDiseaseClasses.filter((c) => c.maladie === maladieKey);
+    let matched = matchingRooms.length > 0 ? matchingRooms[0] : undefined;
+
+    // Try to find a room that isn't full yet
+    for (const room of matchingRooms) {
+      const officialPatients = currentPatients.filter((p) => {
+        if (!p.history || p.history.length === 0) return false;
+        const sortedHistory = [...p.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const latestTriage = sortedHistory[0]?.triage;
+        return latestTriage?.suggestedClass?.placeCode === Number(room.placeCode);
+      }).length;
+      
+      const kioskPatients = room.currentPatients || 0;
+      const total = officialPatients + kioskPatients;
+      
+      if (total < (room.maxPatients || 1)) {
+        matched = room; // Found an available room!
+        break;
+      }
+    }
+    
+    // Check if ALL matching rooms are full (no available room found)
+    const allFull = matchingRooms.length > 0 && (
+      matched === matchingRooms[0] &&
+      (() => {
+        const room = matchingRooms[0];
+        const officialPts = currentPatients.filter((p) => {
+          if (!p.history || p.history.length === 0) return false;
+          const sh = [...p.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+          return sh[0]?.triage?.suggestedClass?.placeCode === Number(room.placeCode);
+        }).length;
+        const total = officialPts + (room.currentPatients || 0);
+        return total >= (room.maxPatients || 1);
+      })()
+    );
+
+    // If all rooms full, store a dashboard alert in localStorage
+    if (allFull && maladieKey !== "autre") {
+      const noRoomAlerts = JSON.parse(localStorage.getItem("noRoomAlerts") || "[]");
+      const alreadyExists = noRoomAlerts.some((a) => a.maladie === maladieKey);
+      if (!alreadyExists) {
+        noRoomAlerts.push({
+          id: Date.now(),
+          maladie: maladieKey,
+          label: label,
+          createdAt: new Date().toISOString(),
+        });
+        localStorage.setItem("noRoomAlerts", JSON.stringify(noRoomAlerts));
+      }
+      window.dispatchEvent(new Event("alerts-updated"));
+    }
+
+    setAllRoomsFull(allFull && maladieKey !== "autre");
+    
+    setResults({ predictions: preds, priority, matchedClass: matched, yesKeys: reportedSymptoms });
+    setView("results");
+
+    if (matched) {
+      try {
+        await api.post(`/api/disease-classes/${matched._id}/increment`);
+        window.dispatchEvent(new Event("alerts-updated"));
+      } catch (err) {
+        console.error("Failed to increment room count:", err);
+      }
+    }
+  };
+
   /* ── Answer a question (yes = true, no = false) ─────────────── */
   const answer = async (value) => {
     if (sliding) return;
@@ -117,106 +305,10 @@ const DetectSickness = () => {
         const features = QUESTIONS.map(q => updated[q.key] ? 1 : 0);
         const res = await api.post("/api/ml/predict", { features });
         const mlPrediction = res.data.prediction; // 'AIDS', 'Malaria', 'Tuberculosis', 'safe'
-
-        let maladieKey = "autre";
-        let confidence = 100;
-        let label = "Safe / No Disease Detected";
-
-        if (mlPrediction !== "safe") {
-           // Map ML prediction to our internal disease classes
-           const ML_MALADIE_MAP = {
-             "AIDS": "cida",
-             "Malaria": "malaria",
-             "Tuberculosis": "tuberculos"
-           };
-           maladieKey = ML_MALADIE_MAP[mlPrediction] || mlPrediction.toLowerCase();
-           confidence = 95; // We assign a high confidence for the model prediction
-           label = mlPrediction;
-        }
-
-        let currentDiseaseClasses = diseaseClasses;
-        let currentPatients = [];
-        try {
-          const [classesRes, patientsRes] = await Promise.all([
-            api.get("/api/disease-classes"),
-            api.get("/api/patients/stats")
-          ]);
-          currentDiseaseClasses = classesRes.data.diseaseClasses || [];
-          currentPatients = patientsRes.data.patients || [];
-          setDiseaseClasses(currentDiseaseClasses);
-        } catch (err) {
-          console.error("Failed to fetch latest data", err);
-        }
-
-        const preds = [{ maladie: maladieKey, label: label, confidence: confidence }];
-        const priority = getPriorityFromPrediction(confidence);
-        
-        // Find all rooms matching the sickness
-        const matchingRooms = currentDiseaseClasses.filter((c) => c.maladie === maladieKey);
-        let matched = matchingRooms.length > 0 ? matchingRooms[0] : undefined;
-
-        // Try to find a room that isn't full yet
-        for (const room of matchingRooms) {
-          const officialPatients = currentPatients.filter((p) => {
-            if (!p.history || p.history.length === 0) return false;
-            const sortedHistory = [...p.history].sort((a, b) => new Date(b.date) - new Date(a.date));
-            const latestTriage = sortedHistory[0]?.triage;
-            return latestTriage?.suggestedClass?.placeCode === Number(room.placeCode);
-          }).length;
-          
-          const kioskPatients = room.currentPatients || 0;
-          const total = officialPatients + kioskPatients;
-          
-          if (total < (room.maxPatients || 1)) {
-            matched = room; // Found an available room!
-            break;
-          }
-        }
-        // Check if ALL matching rooms are full (no available room found)
-        const allFull = matchingRooms.length > 0 && (
-          matched === matchingRooms[0] &&
-          (() => {
-            const room = matchingRooms[0];
-            const officialPts = currentPatients.filter((p) => {
-              if (!p.history || p.history.length === 0) return false;
-              const sh = [...p.history].sort((a, b) => new Date(b.date) - new Date(a.date));
-              return sh[0]?.triage?.suggestedClass?.placeCode === Number(room.placeCode);
-            }).length;
-            const total = officialPts + (room.currentPatients || 0);
-            return total >= (room.maxPatients || 1);
-          })()
-        );
-
-        // If all rooms full, store a dashboard alert in localStorage
-        if (allFull && maladieKey !== "autre") {
-          const noRoomAlerts = JSON.parse(localStorage.getItem("noRoomAlerts") || "[]");
-          const alreadyExists = noRoomAlerts.some((a) => a.maladie === maladieKey);
-          if (!alreadyExists) {
-            noRoomAlerts.push({
-              id: Date.now(),
-              maladie: maladieKey,
-              label: label,
-              createdAt: new Date().toISOString(),
-            });
-            localStorage.setItem("noRoomAlerts", JSON.stringify(noRoomAlerts));
-          }
-          window.dispatchEvent(new Event("alerts-updated"));
-        }
-
-        setAllRoomsFull(allFull && maladieKey !== "autre");
         const yesKeys = Object.keys(updated).filter((k) => updated[k]);
+        
+        await processPrediction(mlPrediction, null, yesKeys);
 
-        setResults({ predictions: preds, priority, matchedClass: matched, yesKeys });
-        setView("results");
-
-        if (matched) {
-          try {
-            await api.post(`/api/disease-classes/${matched._id}/increment`);
-            window.dispatchEvent(new Event("alerts-updated"));
-          } catch (err) {
-            console.error("Failed to increment room count:", err);
-          }
-        }
       } catch (err) {
         console.error("ML prediction error:", err);
         alert("Failed to run the diagnostic model. Please ensure the backend ML service is running.");
@@ -225,6 +317,65 @@ const DetectSickness = () => {
       }
     }
   };
+
+  /* ── Kiosk SSE Listener ──────────────────────────────────────── */
+  useEffect(() => {
+    const isDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const sseUrl = isDev ? "http://localhost:5000/api/result/stream" : "/api/result/stream";
+    
+    const sse = new EventSource(sseUrl);
+    
+    sse.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        // ── Live question/answer progress from kiosk ──────────────
+        if (data.type === 'KIOSK_PROGRESS' && data.payload !== undefined) {
+          const { questionIndex, answer } = data.payload;
+
+          // Switch to quiz view if not already there
+          setView("quiz");
+
+          // Jump to the correct question on screen
+          setCurrent(questionIndex);
+
+          // Flash the selected button (green = oui, red = non)
+          setVoiceSelected(answer ? true : false);
+
+          // After 700ms flash: register answer and advance
+          setTimeout(() => {
+            setVoiceSelected(null);
+            setAnswers(prev => ({
+              ...prev,
+              [QUESTIONS[questionIndex]?.key]: answer,
+            }));
+            // If not the last question, advance to next
+            if (questionIndex < QUESTIONS.length - 1) {
+              setSliding(true);
+              setTimeout(() => {
+                setCurrent(questionIndex + 1);
+                setSliding(false);
+              }, 220);
+            }
+          }, 700);
+        }
+
+        // ── Final result from kiosk ───────────────────────────────
+        if (data.type === 'KIOSK_RESULT' && data.payload) {
+          console.log("Received Kiosk Result:", data.payload);
+          const { prediction, confidence, symptoms_reported } = data.payload;
+          await processPrediction(prediction, confidence, symptoms_reported || []);
+        }
+
+      } catch (err) {
+        console.error("Error parsing Kiosk SSE data", err);
+      }
+    };
+
+    return () => {
+      sse.close();
+    };
+  }, [diseaseClasses]);
 
   const restart = () => {
     isSubmittingRef.current = false;
@@ -325,10 +476,16 @@ const DetectSickness = () => {
                 </div>
 
                 <button
-                  onClick={() => setView("quiz")}
+                  onClick={() => { setVoiceMode(false); setView("quiz"); }}
                   className="btn-primary w-full py-3.5 text-sm font-bold rounded-xl"
                 >
                   Start Assessment →
+                </button>
+                <button
+                  onClick={() => { setVoiceMode(true); setView("quiz"); }}
+                  className="w-full py-3.5 text-sm font-bold rounded-xl flex items-center justify-center gap-2 border-2 border-[#0077b6] text-[#0077b6] hover:bg-[#0077b6]/5 transition-colors"
+                >
+                  <FaMicrophone /> Start with Voice (Oui / Non)
                 </button>
               </div>
             </div>
@@ -369,7 +526,24 @@ const DetectSickness = () => {
               <div className="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between shrink-0"
                 style={{ background: "linear-gradient(90deg,#f8fafc,#f1f5f9)" }}>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Symptom Check</span>
-                <span className="text-[10px] font-bold text-slate-300">{current + 1} / {QUESTIONS.length}</span>
+                <div className="flex items-center gap-3">
+                  {voiceMode && (
+                    <div className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                      listening
+                        ? "bg-red-50 border-red-200 text-red-600 animate-pulse"
+                        : "bg-slate-100 border-slate-200 text-slate-500"
+                    }`}>
+                      {listening ? <FaMicrophone className="text-red-500" /> : <FaMicrophoneSlash />}
+                      {voiceStatus || "Voice Mode"}
+                    </div>
+                  )}
+                  {voiceMode && (
+                    <button onClick={stopVoiceMode} className="text-[10px] text-slate-400 hover:text-red-500 transition-colors">
+                      Stop Voice
+                    </button>
+                  )}
+                  <span className="text-[10px] font-bold text-slate-300">{current + 1} / {QUESTIONS.length}</span>
+                </div>
               </div>
 
               {/* Question area — grows to push buttons down */}
@@ -390,22 +564,38 @@ const DetectSickness = () => {
                 {/* NO */}
                 <button
                   onClick={() => answer(false)}
-                  className="group flex-1 flex flex-col items-center justify-center gap-5 py-12 bg-white hover:bg-red-50 border-r-2 border-slate-100 hover:border-red-200 active:scale-[0.98] transition-all duration-150"
+                  className={`group flex-1 flex flex-col items-center justify-center gap-5 py-12 border-r-2 transition-all duration-150 ${
+                    voiceSelected === false
+                      ? "bg-red-100 border-red-400 scale-[0.98]"
+                      : "bg-white hover:bg-red-50 border-slate-100 hover:border-red-200 active:scale-[0.98]"
+                  }`}
                 >
-                  <FaTimesCircle className="text-7xl text-slate-200 group-hover:text-red-400 transition-colors duration-150" />
-                  <span className="text-3xl font-black text-slate-300 group-hover:text-red-500 tracking-wide transition-colors duration-150">
-                    No
+                  <FaTimesCircle className={`text-7xl transition-colors duration-150 ${
+                    voiceSelected === false ? "text-red-500" : "text-slate-200 group-hover:text-red-400"
+                  }`} />
+                  <span className={`text-3xl font-black tracking-wide transition-colors duration-150 ${
+                    voiceSelected === false ? "text-red-600" : "text-slate-300 group-hover:text-red-500"
+                  }`}>
+                    Non
                   </span>
                 </button>
 
                 {/* YES */}
                 <button
                   onClick={() => answer(true)}
-                  className="group flex-1 flex flex-col items-center justify-center gap-5 py-12 bg-white hover:bg-emerald-50 hover:border-emerald-200 active:scale-[0.98] transition-all duration-150"
+                  className={`group flex-1 flex flex-col items-center justify-center gap-5 py-12 transition-all duration-150 ${
+                    voiceSelected === true
+                      ? "bg-emerald-100 border-emerald-400 scale-[0.98]"
+                      : "bg-white hover:bg-emerald-50 hover:border-emerald-200 active:scale-[0.98]"
+                  }`}
                 >
-                  <FaCheckCircle className="text-7xl text-slate-200 group-hover:text-emerald-400 transition-colors duration-150" />
-                  <span className="text-3xl font-black text-slate-300 group-hover:text-emerald-600 tracking-wide transition-colors duration-150">
-                    Yes
+                  <FaCheckCircle className={`text-7xl transition-colors duration-150 ${
+                    voiceSelected === true ? "text-emerald-500" : "text-slate-200 group-hover:text-emerald-400"
+                  }`} />
+                  <span className={`text-3xl font-black tracking-wide transition-colors duration-150 ${
+                    voiceSelected === true ? "text-emerald-600" : "text-slate-300 group-hover:text-emerald-600"
+                  }`}>
+                    Oui
                   </span>
                 </button>
               </div>
@@ -477,13 +667,10 @@ const DetectSickness = () => {
                 ) : allRoomsFull ? (
                   <div className="space-y-6">
                     <span className="text-6xl sm:text-8xl">⏳</span>
-                    <p className="text-3xl font-black text-amber-500">
-                      All Rooms Are Full
+                    <p className="text-4xl sm:text-5xl font-black text-yellow-500 drop-shadow-sm">
+                      Wait just few seconds
                     </p>
-                    <p className="text-xl font-semibold text-slate-500 leading-relaxed max-w-md mx-auto">
-                      Please wait a few minutes — a nurse will assist you shortly.
-                    </p>
-                    <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-5 py-3 text-sm font-semibold">
+                    <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl px-5 py-3 text-sm font-semibold mt-4">
                       🔔 Staff has been notified
                     </div>
                   </div>

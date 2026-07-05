@@ -8,6 +8,7 @@ const diseaseClassRouter = require('./routes/diseaseClassRoutes');
 const patientRouter = require('./routes/patientRoutes');
 const mlRouter = require('./routes/mlRoutes');
 const pharmacyRouter = require('./routes/pharmacyRoutes');
+const kioskRouter = require('./routes/kioskRoutes');
 const cors = require('cors');
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.use('/api/disease-classes', diseaseClassRouter)
 app.use('/api/patients', patientRouter)
 app.use('/api/ml', mlRouter)
 app.use('/api/pharmacy', pharmacyRouter)
+app.use('/api/result', kioskRouter)
 
 app.listen(port, () => {
     connectDB()

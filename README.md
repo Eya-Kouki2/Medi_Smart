@@ -1,148 +1,318 @@
 # MediSmart Hub 🏥
 
-MediSmart Hub is a comprehensive clinical platform designed to streamline healthcare facility management. It offers role-based access for Administrators, Nurses, Triage staff, and Pharmacy personnel, providing specialized dashboards and tools for each department to manage patient flow, consultations, and medical data efficiently.
+MediSmart Hub is a comprehensive clinical platform designed to streamline healthcare facility management. It features a **Python-powered AI triage kiosk**, a **pharmacy medicine scanner**, real-time dashboards, and role-based access for Administrators, Nurses, Triage staff, and Pharmacy personnel.
+
+---
 
 ## 🌟 Features
 
-*   **Role-Based Access Control (RBAC):** Secure access tailored for different roles (`admin`, `nurses`, `triage`, `pharmacy`).
-*   **Area Management:** Admins create clinic areas and receive shareable codes (`MSH-XXXXXX`) for staff onboarding.
-*   **Dynamic Dashboards:** Real-time analytics, active class tracking, and quick actions specific to the logged-in user's role.
-*   **Smart Triage System:** Efficiently process new patients and manage consultations.
-*   **Patient Management:** Comprehensive patient profiles, medical history tracking, and cohort visualization.
-*   **Disease Classifications:** Manage and categorize disease classes (Admin only) to assist in triage and patient placement.
-*   **Pharmacy Monitor:** Track pharmacy operations and medication flows.
-*   **Secure Authentication:** Features include email verification, password reset flows, and secure session management using HTTP-only cookies and JWTs.
-*   **Modern UI/UX:** A premium, responsive design built with React, Vite, and Tailwind CSS.
+- **Role-Based Access Control (RBAC):** Secure access for roles: `admin`, `nurses`, `triage`, `pharmacy`.
+- **AI-Powered Detect Sickness:** A voice kiosk (powered by `triage_kiosk.py`) interviews patients in French using speech recognition and automatically sends results to the live dashboard via SSE.
+- **Pharmacy Monitor (AI Scanner):** Upload an image of a medicine box; the AI (`pharmacy_scan.py`) extracts drug name, strength, expiry date, and inventory status automatically.
+- **Smart Triage System:** Manually answer symptom questions to get an ML-powered room assignment.
+- **Stock Inventory:** Scan results queue in a pending list. Accept them individually or all at once to save to the database.
+- **Live Room Assignment:** When all rooms for a disease are full, the kiosk screen shows "Wait just few seconds" in yellow.
+- **Patient Management:** Comprehensive patient profiles and medical history tracking.
+- **Disease Classifications:** Map disease classes to physical hospital rooms (Admin only).
+- **Secure Authentication:** Email verification, password reset, JWT (httpOnly cookies).
+- **Modern UI/UX:** Premium, responsive design built with React and Vite.
+
+---
 
 ## 💻 Tech Stack
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Frontend** | React, Vite, Tailwind CSS, React Router, Axios |
+| **Frontend** | React 18, Vite, Tailwind CSS, React Router, Axios |
 | **Backend** | Node.js, Express, MongoDB, Mongoose |
+| **ML / AI** | Python 3, scikit-learn, OpenCV, pyttsx3, SpeechRecognition, EasyOCR |
 | **Auth** | JWT (httpOnly cookies), bcryptjs |
 | **Email** | Nodemailer (Gmail) |
+| **Real-time** | Server-Sent Events (SSE) |
+
+---
 
 ## 🔐 Role Capabilities
 
 | Feature | Admin | Nurse | Triage | Pharmacy |
 | :--- | :---: | :---: | :---: | :---: |
 | **Dashboard** | ✅ | ✅ | 🚧 | 🚧 |
-| **Patients** | ✅ (Full) | ✅ (Read/Update) | 🚧 | 🚧 |
-| **Smart Triage** | ✅ | ✅ | ✅ | ❌ |
-| **Pharmacy** | ✅ | ✅ | ❌ | ✅ |
-| **Disease Classes**| ✅ (Manage) | ✅ (Read Only) | ❌ | ❌ |
-| **Reports** | ✅ | ❌ | ❌ | ❌ |
-| **Area Staff** | ✅ | ✅ (Read Only) | ❌ | ❌ |
+| **Patients** | ✅ Full | ✅ Read/Update | 🚧 | 🚧 |
+| **Detect Sickness** | ✅ | ✅ | ✅ | ❌ |
+| **Pharmacy Monitor** | ✅ | ✅ | ❌ | ✅ |
+| **Disease Classes** | ✅ Manage | ✅ Read Only | ❌ | ❌ |
+| **Area Staff** | ✅ | ✅ Read Only | ❌ | ❌ |
 
-*(Note: 🚧 denotes features currently in development or planned for specific roles)*
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-*   [Node.js](https://nodejs.org/) (v18+ recommended)
-*   [MongoDB](https://www.mongodb.com/) (local or Atlas)
-*   A Gmail account with an [App Password](https://support.google.com/accounts/answer/185833) for Nodemailer
+- [Node.js](https://nodejs.org/) v18+
+- [MongoDB](https://www.mongodb.com/) (local or Atlas)
+- [Python 3.10+](https://www.python.org/)
+- A Gmail account with an [App Password](https://support.google.com/accounts/answer/185833) for Nodemailer
 
-### Installation
+---
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/Eya-Kouki2/Medi_Smart.git
-    cd "ies nodes and hubs"
-    ```
+## ▶️ How to Run the Project
 
-2.  **Backend Setup:**
-    ```bash
-    cd backend
-    npm install
-    ```
-    *   Create a `.env` file in the `backend` directory (see Environment Variables below).
-    *   Start the development server:
-        ```bash
-        npm run dev
-        ```
+You will need **3 terminal windows** open at the same time.
 
-3.  **Frontend Setup:**
-    ```bash
-    cd ../frontend
-    npm install
-    ```
-    *   Start the Vite development server:
-        ```bash
-        npm run dev
-        ```
+---
 
-4.  **Access the Application:**
-    Open your browser and navigate to `http://localhost:5173`.
-    Backend API runs on `http://localhost:5000`.
+### Step 1 — Clone the Repository
+
+```bash
+git clone https://github.com/Eya-Kouki2/Medi_Smart.git
+cd Medi_Smart
+```
+
+---
+
+### Step 2 — Set Up Environment Variables
+
+Create a `.env` file inside the `backend/` folder with the following content:
+
+```env
+PORT=5000
+NODE_ENV=development
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_long_random_secret
+CLIENT_URL=http://localhost:5173
+EMAIL_USER=your_gmail@gmail.com
+EMAIL_PASS=your_gmail_app_password
+EMAIL_NAME=MediSmart Hub
+```
+
+---
+
+### Step 3 — Install All Dependencies
+
+**Backend (Node.js):**
+```bash
+cd backend
+npm install
+```
+
+**Frontend (React):**
+```bash
+cd frontend
+npm install
+```
+
+**Python AI (ML scripts):**
+```bash
+cd backend/ml
+pip install opencv-contrib-python pyttsx3 SpeechRecognition joblib requests flask scikit-learn PyAudio easyocr
+```
+
+> **Windows Note:** If `PyAudio` fails, download the pre-compiled `.whl` for your Python version from [Unofficial Windows Binaries](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) and install with `pip install <filename>.whl`.
+
+---
+
+### Step 4 — Start the Backend Server
+
+> **Terminal 1**
+
+```bash
+cd backend
+npm run dev
+```
+
+✅ You should see: `Server is running on port 5000`
+
+---
+
+### Step 5 — Start the Frontend
+
+> **Terminal 2**
+
+```bash
+cd frontend
+npm run dev
+```
+
+✅ Open your browser at **http://localhost:5173**
+
+---
+
+### Step 6 — (Optional) Run the AI Triage Kiosk
+
+> **Terminal 3** — Only needed if you want the voice kiosk hardware integration
+
+```bash
+cd backend/ml
+python triage_kiosk.py
+```
+
+✅ You should see: `En attente d'une détection de présence (ESP32) sur le port 5001`
+
+The kiosk is now waiting for a patient to be detected by the ESP32 sensor.
+
+**To test without physical hardware**, open a 4th terminal and run:
+
+```powershell
+# Windows PowerShell
+Invoke-WebRequest -Uri http://localhost:5001/presence -Method POST -Body "1"
+```
+
+```bash
+# Linux / macOS
+curl -X POST -d "1" http://localhost:5001/presence
+```
+
+The webcam will activate → voice assistant asks questions in French → result appears live on the **Detect Sickness** page automatically.
+
+---
+
+### Step 7 — Using the Pharmacy Scanner
+
+1. Log in and navigate to **Pharmacy Monitor** in the sidebar.
+2. Drag & drop (or click to upload) an image of a medicine box.
+3. The AI will extract: Drug Name, Strength, Expiry Date, Inventory Status.
+4. Results appear in the **Scan Results** table (pending, saved in your browser).
+5. Click ✅ on individual rows to accept, or **Accept All** to save everything to the database.
+
+---
+
+### Quick Summary
+
+| What | Command | Terminal |
+| :--- | :--- | :--- |
+| Start Backend | `cd backend && npm run dev` | Terminal 1 |
+| Start Frontend | `cd frontend && npm run dev` | Terminal 2 |
+| Start Kiosk (optional) | `cd backend/ml && python triage_kiosk.py` | Terminal 3 |
+| Simulate Sensor (Windows) | `Invoke-WebRequest -Uri http://localhost:5001/presence -Method POST -Body "1"` | Terminal 4 |
+
+---
+
+## 🎙️ Hardware Triage Kiosk
+
+The physical kiosk (`triage_kiosk.py`) uses an **ESP32 presence sensor**, **webcam** (face detection), and **microphone** (French voice AI) to fully automate the patient triage process. Results are sent to the dashboard in real-time.
+
+### How It Works
+
+1. Patient approaches the kiosk → ESP32 detects presence → triggers the script.
+2. Webcam confirms a face is present.
+3. Voice AI asks the patient symptom questions in French: *"Avez-vous de la toux ?"*
+4. Patient answers **"Oui"** or **"Non"** out loud.
+5. The ML model (`triage_rf_model_v2.pkl`) analyzes the answers and predicts the disease.
+6. Result is sent via HTTP to `POST /api/result` on the Node.js backend.
+7. The **Detect Sickness** page instantly shows the room assignment via SSE (no page refresh needed).
+
+### Run the Kiosk
+
+Make sure the backend server is running, then in a new terminal:
+
+```bash
+cd backend/ml
+python triage_kiosk.py
+```
+
+The script will output: `En attente d'une détection de présence (ESP32) sur le port 5001`
+
+### Simulate Without Hardware
+
+To test the full flow without an ESP32 sensor, open a new terminal and trigger the presence manually:
+
+**PowerShell (Windows):**
+```powershell
+Invoke-WebRequest -Uri http://localhost:5001/presence -Method POST -Body "1"
+```
+
+**Linux / macOS:**
+```bash
+curl -X POST -d "1" http://localhost:5001/presence
+```
+
+The webcam will activate, the voice assistant will ask questions, and results will appear on the dashboard!
+
+---
+
+## 💊 Pharmacy Monitor (AI Scanner)
+
+The pharmacy scanner uses `pharmacy_scan.py` (backed by EasyOCR) to read medicine box images.
+
+1. Navigate to **Pharmacy Monitor** in the sidebar.
+2. Drag and drop (or upload) an image of a medicine box.
+3. The AI extracts: **Drug Name**, **Strength**, **Expiry Date**, **Inventory Status**.
+4. Results appear in the **Scan Results** table (pending queue, persisted in `localStorage`).
+5. Review each result individually using the ✅ Accept or 🗑️ Discard buttons.
+6. Or use **Accept All** to save all pending scans to the **Stock Inventory** database at once.
+
+---
 
 ## ⚙️ Environment Variables
 
 ### Backend (`backend/.env`)
 
-Copy the `.env.example` file and fill in your values:
-
-```bash
-cp backend/.env.example backend/.env
+```env
+PORT=5000
+NODE_ENV=development
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_long_random_secret
+CLIENT_URL=http://localhost:5173
+EMAIL_USER=your_gmail@gmail.com
+EMAIL_PASS=your_gmail_app_password
+EMAIL_NAME=MediSmart Hub
 ```
 
-| Variable | Description |
-| :--- | :--- |
-| `PORT` | Backend port (default: `5000`) |
-| `NODE_ENV` | `development` or `production` |
-| `MONGO_URI` | MongoDB connection string |
-| `JWT_SECRET` | Long random string for signing tokens |
-| `CLIENT_URL` | Frontend URL (e.g. `http://localhost:5173`) |
-| `EMAIL_USER` | Gmail address used to send emails |
-| `EMAIL_PASS` | Gmail app password |
-| `EMAIL_NAME` | Display name in outgoing emails |
-
-### Frontend
-
-The frontend uses an Axios instance configured to point to `http://localhost:5000/api` by default. If needed, you can create a `frontend/.env` file:
+### Frontend (`frontend/.env`) — Optional
 
 ```env
 VITE_API_URL=http://localhost:5000
 ```
 
+---
+
 ## 📁 Project Structure
 
-```text
+```
+Medi_Smart/
 ├── backend/
-│   ├── config/          # Database connection & configurations
-│   ├── controllers/     # Route handlers (Auth, Patients, Areas, etc.)
-│   ├── mailer/          # Email templates & sending utilities
+│   ├── config/          # DB connection
+│   ├── controllers/     # Route handlers
+│   ├── mailer/          # Email templates
 │   ├── middleware/      # JWT & role guards
-│   ├── models/          # Mongoose schemas (User, Patient, DiseaseClass, etc.)
-│   ├── routes/          # API routes
-│   ├── utils/           # Helper functions
-│   └── server.js        # Entry point for the Express application
+│   ├── ml/              # Python AI scripts
+│   │   ├── triage_kiosk.py       # Hardware voice kiosk
+│   │   ├── pharmacy_scan.py      # Medicine OCR scanner
+│   │   ├── predict.py            # CLI ML prediction wrapper
+│   │   └── triage_rf_model_v2.pkl
+│   ├── models/          # Mongoose schemas
+│   ├── routes/          # Express API routes
+│   │   ├── kioskRoutes.js        # SSE + POST /api/result
+│   │   ├── pharmacyRoutes.js     # Pharmacy scan & inventory
+│   │   └── mlRoutes.js           # ML prediction
+│   └── server.js
 ├── frontend/
-│   ├── public/          # Static assets
 │   └── src/
-│       ├── api/         # Axios client
-│       ├── assets/      # Images, global styles
-│       ├── components/  # Reusable UI components (Auth, Admin Layouts, Sidebar)
-│       ├── constants/   # Global constants
-│       ├── hooks/       # Custom React hooks
-│       ├── pages/       # Route components (AdminHome, Login, Signup, Patients)
-│       ├── routes/      # React Router configuration (AppRoutes.jsx)
-│       ├── utils/       # Frontend helper functions (getDashboardPath, etc.)
-│       ├── App.jsx      # Root React component
-│       ├── main.jsx     # React DOM rendering entry point
-│       └── index.css    # Main stylesheet including Tailwind directives
-├── .env.example
-└── package.json
+│       ├── pages/admin/
+│       │   ├── DetectSickness.jsx  # Triage form + kiosk listener
+│       │   └── PharmacyMonitor.jsx # Pharmacy scanner UI
+│       └── ...
+└── README.md
 ```
 
-## 🌐 API Endpoints Overview
+---
 
-*   **Auth** (`/api/auth`): Signup, login, logout, check-auth, verify-email, password reset flow.
-*   **Areas** (`/api/areas`): Create area, get my area, get staff list.
-*   **Patients** (`/api/patients`): CRUD operations for patients and their medical history/triage.
-*   **Disease Classes** (`/api/disease-classes`): Manage disease categories for triage.
+## 🌐 API Endpoints
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/auth/signup` | Register a new user |
+| `POST` | `/api/auth/login` | Login |
+| `GET` | `/api/patients` | Get all patients |
+| `POST` | `/api/ml/predict` | Run ML prediction from symptom features |
+| `POST` | `/api/result` | Receive result from `triage_kiosk.py` |
+| `GET` | `/api/result/stream` | SSE stream for live kiosk results |
+| `POST` | `/api/pharmacy/scan` | Upload image for AI medicine scan |
+| `GET` | `/api/pharmacy` | Get all saved inventory |
+| `POST` | `/api/pharmacy/accept` | Save pending scans to inventory |
+
+---
 
 ## 🛠️ Production Build
 
@@ -151,7 +321,8 @@ cd frontend
 npm run build
 ```
 
-Serve the `frontend/dist` folder with any static host and point `CLIENT_URL` and `VITE_API_URL` to your production URLs.
+Serve the `frontend/dist` folder with any static host and update `CLIENT_URL` and `VITE_API_URL` to your production URLs.
 
 ---
+
 *Built by the MediSmart Team.*
