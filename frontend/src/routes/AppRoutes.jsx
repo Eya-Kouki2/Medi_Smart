@@ -19,6 +19,7 @@ import AuditLog from "../pages/admin/AuditLog";
 import Settings from "../pages/admin/Settings";
 import Profile from "../pages/admin/Profile";
 import DiseaseClasses from "../pages/admin/DiseaseClasses";
+import DetectSickness from "../pages/admin/DetectSickness";
 
 const AppRoutes = () => (
   <Routes>
@@ -34,6 +35,7 @@ const AppRoutes = () => (
       <Route index element={<AdminHome />} />
       <Route path="patients" element={<Patients />} />
       <Route path="triage" element={<Triage />} />
+      <Route path="detect-sickness" element={<DetectSickness />} />
       <Route path="pharmacy" element={<Pharmacy />} />
       <Route path="disease-classes" element={<DiseaseClasses />} />
       <Route path="analytics" element={<Analytics />} />
@@ -48,6 +50,7 @@ const AppRoutes = () => (
       <Route index element={<AdminHome />} />
       <Route path="patients" element={<Patients />} />
       <Route path="triage" element={<Triage />} />
+      <Route path="detect-sickness" element={<DetectSickness />} />
       <Route path="pharmacy" element={<Pharmacy />} />
       <Route path="profile" element={<Profile />} />
     </Route>

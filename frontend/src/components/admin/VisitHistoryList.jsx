@@ -18,8 +18,15 @@ const HISTORY_BADGES = {
   note: "bg-gray-50 text-gray-600 border-gray-100",
 };
 
-const hasTriageData = (entry) =>
-  Boolean(entry.triage?.symptoms?.length || entry.triage?.predictions?.length || entry.triage?.vitals);
+const hasTriageData = (entry) => {
+  if (!entry.triage) return false;
+  const hasVitals = Object.values(entry.triage.vitals || {}).some(v => v && v.trim() !== '');
+  return Boolean(
+    entry.triage.symptoms?.length ||
+    entry.triage.predictions?.length ||
+    hasVitals
+  );
+};
 
 const EditButton = ({ onEdit, entry }) => {
   if (!onEdit) return null;

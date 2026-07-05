@@ -3,13 +3,13 @@ import { NavLink } from "react-router-dom";
 import { FaHeartbeat, FaCopy, FaCheck, FaSignOutAlt } from "react-icons/fa";
 
 const ALL_NAV_ITEMS = [
-  { key: "dashboard",      label: "Dashboard",        icon: "📊", end: true, adminOnly: false },
-  { key: "patients",       label: "Patients",         icon: "👥",            adminOnly: false },
-  { key: "triage",         label: "Smart Triage",     icon: "🩺",            adminOnly: false },
-  { key: "pharmacy",       label: "Pharmacy Monitor", icon: "💊",            adminOnly: false },
-  { key: "disease-classes",label: "Disease Classes",  icon: "🦠",            adminOnly: true  },
-  { key: "reports",        label: "Reports",          icon: "📜",            adminOnly: true  },
-  { key: "profile",        label: "Profile",          icon: "👤",            adminOnly: false },
+  { key: "dashboard", label: "Dashboard", icon: "📊", end: true, adminOnly: false },
+  { key: "patients", label: "Patients", icon: "👥", adminOnly: false },
+  { key: "detect-sickness", label: "Detect sickness", icon: "🧬", adminOnly: false },
+  { key: "pharmacy", label: "Pharmacy Monitor", icon: "💊", adminOnly: false },
+  { key: "disease-classes", label: "Disease Classes", icon: "🦠", adminOnly: true },
+  { key: "reports", label: "Reports", icon: "📜", adminOnly: true },
+  { key: "profile", label: "Profile", icon: "👤", adminOnly: false },
 ];
 
 const Sidebar = ({ user, onLogout, role = "admin" }) => {
@@ -91,10 +91,9 @@ const Sidebar = ({ user, onLogout, role = "admin" }) => {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 ${
-                isActive
-                  ? "bg-white/18 text-white shadow-sm border border-white/20"
-                  : "text-blue-100/75 hover:bg-white/10 hover:text-white"
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 ${isActive
+                ? "bg-white/18 text-white shadow-sm border border-white/20"
+                : "text-blue-100/75 hover:bg-white/10 hover:text-white"
               }`
             }
           >

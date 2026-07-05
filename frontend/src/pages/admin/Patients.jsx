@@ -1,6 +1,6 @@
 import api from "../../api/axios";
 import { useEffect, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { FaEdit, FaPlus, FaTimes, FaTrash } from "react-icons/fa";
 import PageHeader from "../../components/admin/PageHeader";
 import VisitHistoryList from "../../components/admin/VisitHistoryList";
@@ -85,7 +85,12 @@ const patientToEditForm = (patient) => ({
 });
 
 const historyEntryToEditForm = (entry) => {
-  const hasTriage = Boolean(entry.triage);
+  const hasVitals = Object.values(entry.triage?.vitals || {}).some(v => v && v.trim() !== '');
+  const hasTriage = Boolean(
+    entry.triage?.symptoms?.length ||
+    entry.triage?.predictions?.length ||
+    hasVitals
+  );
   return {
     _id: entry._id,
     isTriage: hasTriage,
@@ -119,6 +124,7 @@ const calcAge = (dateOfBirth) => {
 
 const Patients = () => {
   const { user } = useOutletContext();
+  const navigate = useNavigate();
   const [patients, setPatients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -399,7 +405,10 @@ const Patients = () => {
         actions={
           <button
             type="button"
-            onClick={() => { setShowForm(true); setErrorMessage(null); }}
+            onClick={() => {
+              const basePath = user?.role === "nurses" ? "/nurse" : "/admin";
+              navigate(`${basePath}/triage`);
+            }}
             className="btn-primary"
           >
             <FaPlus className="text-[10px]" /> Add patient

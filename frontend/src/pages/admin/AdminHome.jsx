@@ -23,16 +23,16 @@ const CHART_COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6
 /* ─── Custom SVG Donut Chart ───────────────────────────── */
 const DonutChart = ({ data, total }) => {
   if (!data?.length || !total) return <div className="text-xs text-gray-400 py-10 text-center">No diagnostic data</div>;
-  
+
   const size = 160;
   const cx = size / 2;
   const cy = size / 2;
   const strokeWidth = 35;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  
+
   let currentOffset = 0;
-  
+
   return (
     <div className="flex flex-col xl:flex-row items-center gap-6 justify-center mt-4">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
@@ -60,7 +60,7 @@ const DonutChart = ({ data, total }) => {
         {/* Inner circle punch */}
         <div className="absolute inset-0 m-auto bg-white rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)]" style={{ width: size - strokeWidth * 2, height: size - strokeWidth * 2 }}></div>
       </div>
-      
+
       {/* Legend */}
       <div className="space-y-3 min-w-[120px]">
         {data.map((item, i) => (
@@ -85,16 +85,16 @@ const LineChart = ({ data, color = "#3b82f6", height = 180 }) => {
   const h = height;
   const paddingX = 25;
   const paddingY = 20;
-  
+
   const innerW = w - paddingX * 2;
   const innerH = h - paddingY * 2;
   const step = innerW / Math.max(data.length - 1, 1);
-  
+
   const pts = data.map((d, i) => `${paddingX + i * step},${paddingY + innerH - (d.count / max) * innerH}`).join(" ");
-  
+
   // Y-axis grid lines
   const gridLines = [0, 0.25, 0.5, 0.75, 1].map(ratio => paddingY + innerH - innerH * ratio);
-  
+
   return (
     <div className="w-full overflow-hidden mt-4">
       <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full" style={{ height }}>
@@ -105,10 +105,10 @@ const LineChart = ({ data, color = "#3b82f6", height = 180 }) => {
             <text x={0} y={y - 4} fontSize="9" fill="#cbd5e1">{Math.round(max * (i * 0.25))}</text>
           </g>
         ))}
-        
+
         {/* Line */}
         <polyline fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" points={pts} className="drop-shadow-sm" />
-        
+
         {/* Points & X-labels */}
         {data.map((d, i) => {
           const px = paddingX + i * step;
@@ -133,7 +133,7 @@ const TinySparkline = ({ data, color = "#10b981" }) => {
   const h = 20;
   const step = w / Math.max(data.length - 1, 1);
   const pts = data.map((d, i) => `${i * step},${h - (d.count / max) * (h - 2) - 1}`).join(" ");
-  
+
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible">
       <polyline fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" points={pts} />
@@ -145,7 +145,7 @@ const TinySparkline = ({ data, color = "#10b981" }) => {
 const generateTrend = (points, upward = true) => {
   const data = [];
   let current = upward ? 2 : 10;
-  for (let i=0; i<points; i++) {
+  for (let i = 0; i < points; i++) {
     data.push({ count: current });
     current += Math.random() * 4 * (upward ? 1 : -1) + (Math.random() > 0.5 ? 2 : -2);
     if (current < 1) current = 1;
@@ -221,7 +221,7 @@ const AdminHome = () => {
         if (h.triage?.predictions?.length) {
           totalTriage++;
           const d = new Date(h.date);
-          
+
           if (d.toDateString() === today) {
             todayTriageCount++;
           }
@@ -301,7 +301,7 @@ const AdminHome = () => {
             <FaCheckCircle className="text-health-blue text-[15px]" />
             <div>
               <p className="text-[11px] font-bold text-health-navy leading-tight">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-              <p className="text-[9px] text-slate-400 font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long' })}, {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute:'2-digit' })}</p>
+              <p className="text-[9px] text-slate-400 font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long' })}, {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
             </div>
           </div>
         </div>
@@ -315,7 +315,7 @@ const AdminHome = () => {
         <>
           {/* ── Top Metrics Row ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            
+
             {/* Card 1 */}
             <div className="bg-white rounded-[14px] p-4 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden group hover:border-health-blue/20 hover:shadow-md transition-all">
               <div className="flex items-center justify-between mb-2">
@@ -390,10 +390,10 @@ const AdminHome = () => {
 
           {/* ── Main Layout: Charts & Tables vs Sidebar ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             {/* ── Left Column (col-span-2) ── */}
             <div className="lg:col-span-2 space-y-6">
-              
+
               {/* Charts Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Disease Distribution */}
@@ -469,10 +469,9 @@ const AdminHome = () => {
                             </div>
                           </td>
                           <td className="py-3 px-2 text-center">
-                            <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                              triage.priority.includes("High") || triage.priority.includes("Critical") ? "text-red-500" :
+                            <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${triage.priority.includes("High") || triage.priority.includes("Critical") ? "text-red-500" :
                               triage.priority.includes("Moderate") ? "text-amber-500" : "text-emerald-500"
-                            }`}>
+                              }`}>
                               {triage.priority.split(' ')[0]}
                             </span>
                           </td>
@@ -488,7 +487,7 @@ const AdminHome = () => {
                     </tbody>
                   </table>
                 </div>
-                
+
                 {stats.recentTriages.length > 0 && (
                   <div className="mt-4 pt-3 border-t border-slate-50 flex justify-between items-center text-[10px] font-medium text-slate-400">
                     <span>Showing {stats.recentTriages.length} cases</span>
@@ -500,10 +499,10 @@ const AdminHome = () => {
 
             {/* ── Right Column (Sidebar) ── */}
             <div className="space-y-6">
-              
+
               {/* Active Classes */}
               <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm h-[320px] flex flex-col">
-                <div 
+                <div
                   className="flex items-center justify-between mb-5 shrink-0 cursor-pointer group/title"
                   onClick={() => setShowClassesModal(true)}
                 >
@@ -520,46 +519,46 @@ const AdminHome = () => {
                     </button>
                   )}
                 </div>
-                
+
                 <div className="flex-1 overflow-y-auto pr-1 space-y-3">
                   {diseaseClasses.length > 0 ? diseaseClasses.map((item) => (
-                    <div 
-                      key={item._id} 
+                    <div
+                      key={item._id}
                       onClick={() => setSelectedClassForPatients(item)}
                       className="p-3 rounded-[14px] bg-slate-50/50 hover:bg-slate-50 transition-all border border-slate-100 hover:border-health-blue/20 flex flex-col gap-2 cursor-pointer hover:shadow-sm"
                     >
                       <div className="flex items-center justify-between">
-                        <p className="text-[12px] font-bold text-health-navy truncate">{item.name}</p>
-                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                          item.severity === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' :
+                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ml-auto ${item.severity === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' :
                           item.severity === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
-                          item.severity === 'moderate' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                          'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                        }`}>
-                          <span className={`w-1 h-1 rounded-full ${
-                            item.severity === 'critical' ? 'bg-red-500 animate-pulse' :
+                            item.severity === 'moderate' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                              'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                          }`}>
+                          <span className={`w-1 h-1 rounded-full ${item.severity === 'critical' ? 'bg-red-500 animate-pulse' :
                             item.severity === 'high' ? 'bg-orange-500' :
-                            item.severity === 'moderate' ? 'bg-amber-500' :
-                            'bg-emerald-500'
-                          }`}></span>
+                              item.severity === 'moderate' ? 'bg-amber-500' :
+                                'bg-emerald-500'
+                            }`}></span>
                           {item.severity.toUpperCase()}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 mt-0.5">
-                        <div className="bg-white border border-slate-100 rounded-lg p-2 flex flex-col justify-center">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Place Code</span>
-                          <span className="text-xs font-black text-health-blue">
-                            Room #{item.placeCode}
-                          </span>
+                      <div className="space-y-2 mt-2 px-1">
+                        <div className="flex items-center justify-between text-xs border-b border-slate-100/60 pb-2">
+                          <span className="font-semibold text-slate-400 text-[11px]">Room</span>
+                          <span className="font-black text-health-blue">Room #{item.placeCode}</span>
                         </div>
-                        <div className="bg-white border border-slate-100 rounded-lg p-2 flex flex-col justify-center">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Condition</span>
-                          <span className="text-[10px] font-bold text-slate-700 truncate flex items-center gap-1">
+                        <div className="flex items-center justify-between text-xs pb-1">
+                          <span className="font-semibold text-slate-400 text-[11px]">Target Condition</span>
+                          <span className="font-bold text-slate-700 flex items-center gap-1.5">
                             <FaVirus className="text-indigo-400 shrink-0" /> {getMaladieLabel(item.maladie)}
                           </span>
                         </div>
                       </div>
+                      {item.description && (
+                        <p className="text-[10px] text-slate-500 mt-2 line-clamp-2 px-1 pt-1.5 border-t border-dashed border-slate-100">
+                          {item.description}
+                        </p>
+                      )}
                     </div>
                   )) : (
                     <div className="py-8 text-center">
@@ -574,7 +573,7 @@ const AdminHome = () => {
                 <h3 className="text-[13px] font-bold text-health-navy flex items-center gap-2 mb-4">
                   <FaCheckCircle className="text-slate-600" /> Quick Actions
                 </h3>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <Link to={`${basePath}/triage`} className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-blue-50 bg-blue-50/60 hover:bg-blue-100/50 transition-colors text-center group">
                     <FaUserMd className="text-xl text-blue-500 group-hover:scale-110 transition-transform" />
@@ -625,73 +624,73 @@ const AdminHome = () => {
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div>
                 <h3 className="text-base font-black text-health-navy tracking-tight flex items-center gap-2">
-                  <FaShieldAlt className="text-health-blue" /> Active Disease Classes & Containment
+                  <FaShieldAlt className="text-health-blue" /> Active Disease Rooms & Containment
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">Overview of active isolation cohorts and patient routing paths</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowClassesModal(false)}
                 className="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300 flex items-center justify-center font-bold text-base transition-colors"
               >
                 &times;
               </button>
             </div>
-            
+
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto space-y-4 bg-slate-50/30 max-h-[60vh]">
               {diseaseClasses.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {diseaseClasses.map((item) => (
-                    <div 
-                      key={item._id} 
+                    <div
+                      key={item._id}
                       onClick={() => setSelectedClassForPatients(item)}
                       className="p-4 rounded-xl bg-white border border-slate-100 shadow-sm flex flex-col gap-3 cursor-pointer hover:border-health-blue/30 hover:shadow-md transition-all"
                     >
                       <div className="flex items-center justify-between">
-                        <p className="text-[13px] font-black text-health-navy">{item.name}</p>
-                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                          item.severity === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' :
+                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ml-auto ${item.severity === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' :
                           item.severity === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
-                          item.severity === 'moderate' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                          'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                        }`}>
-                          <span className={`w-1 h-1 rounded-full ${
-                            item.severity === 'critical' ? 'bg-red-500 animate-pulse' :
+                            item.severity === 'moderate' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                              'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                          }`}>
+                          <span className={`w-1 h-1 rounded-full ${item.severity === 'critical' ? 'bg-red-500 animate-pulse' :
                             item.severity === 'high' ? 'bg-orange-500' :
-                            item.severity === 'moderate' ? 'bg-amber-500' :
-                            'bg-emerald-500'
-                          }`}></span>
+                              item.severity === 'moderate' ? 'bg-amber-500' :
+                                'bg-emerald-500'
+                            }`}></span>
                           {item.severity.toUpperCase()}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 mt-1">
-                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col justify-center">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Place Code</span>
-                          <span className="text-xs font-black text-health-blue">
-                            Room #{item.placeCode}
-                          </span>
+                      <div className="space-y-2 mt-2 px-1">
+                        <div className="flex items-center justify-between text-xs border-b border-slate-100/60 pb-2">
+                          <span className="font-semibold text-slate-400 text-[11px]">Room</span>
+                          <span className="font-black text-health-blue">Room #{item.placeCode}</span>
                         </div>
-                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col justify-center">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Target Condition</span>
-                          <span className="text-[10px] font-bold text-slate-700 truncate flex items-center gap-1">
+                        <div className="flex items-center justify-between text-xs pb-1">
+                          <span className="font-semibold text-slate-400 text-[11px]">Target Condition</span>
+                          <span className="font-bold text-slate-700 flex items-center gap-1.5">
                             <FaVirus className="text-indigo-400 shrink-0" /> {getMaladieLabel(item.maladie)}
                           </span>
                         </div>
                       </div>
+                      {item.description && (
+                        <p className="text-[10px] text-slate-500 mt-2 line-clamp-2 px-1 pt-1.5 border-t border-dashed border-slate-100">
+                          {item.description}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="py-12 text-center text-slate-400 text-xs">
-                  No active disease classes defined yet.
+                  No active disease Rooms defined yet.
                 </div>
               )}
             </div>
-            
+
             {/* Modal Footer */}
             <div className="p-4 border-t border-slate-100 bg-white flex justify-end">
-              <button 
+              <button
                 onClick={() => setShowClassesModal(false)}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] rounded-xl transition-colors"
               >
@@ -716,14 +715,14 @@ const AdminHome = () => {
                   Class: <span className="font-bold text-slate-700">{selectedClassForPatients.name}</span> (Room #{selectedClassForPatients.placeCode})
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedClassForPatients(null)}
                 className="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300 flex items-center justify-center font-bold text-base transition-colors"
               >
                 &times;
               </button>
             </div>
-            
+
             {/* Modal Content */}
             <div className="p-5 overflow-y-auto space-y-3 bg-slate-50/30">
               {(() => {
@@ -750,10 +749,9 @@ const AdminHome = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                          latest?.triage?.priority?.includes("High") || latest?.triage?.priority?.includes("Critical") ? "bg-red-50 text-red-600" :
+                        <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${latest?.triage?.priority?.includes("High") || latest?.triage?.priority?.includes("Critical") ? "bg-red-50 text-red-600" :
                           latest?.triage?.priority?.includes("Moderate") ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"
-                        }`}>
+                          }`}>
                           {latest?.triage?.priority?.split(' ')[0]}
                         </span>
                         <p className="text-[9px] text-slate-400 font-medium mt-1">
@@ -765,10 +763,10 @@ const AdminHome = () => {
                 });
               })()}
             </div>
-            
+
             {/* Modal Footer */}
             <div className="p-4 border-t border-slate-100 bg-white flex justify-end">
-              <button 
+              <button
                 onClick={() => setSelectedClassForPatients(null)}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] rounded-xl transition-colors"
               >
