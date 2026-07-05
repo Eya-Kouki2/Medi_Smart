@@ -12,7 +12,7 @@ import NurseLayout from "../components/admin/NurseLayout";
 import AdminHome from "../pages/admin/AdminHome";
 import Patients from "../pages/admin/Patients";
 import Triage from "../pages/admin/Triage";
-import Pharmacy from "../pages/admin/Pharmacy";
+import PharmacyMonitor from "../pages/admin/PharmacyMonitor";
 import Analytics from "../pages/admin/Analytics";
 import Reports from "../pages/admin/Reports";
 import AuditLog from "../pages/admin/AuditLog";
@@ -37,7 +37,7 @@ const AppRoutes = () => (
       <Route path="patients" element={<Patients />} />
       <Route path="triage" element={<Triage />} />
       <Route path="detect-sickness" element={<DetectSickness />} />
-      <Route path="pharmacy" element={<Pharmacy />} />
+      <Route path="pharmacy" element={<PharmacyMonitor />} />
       <Route path="disease-classes" element={<DiseaseClasses />} />
       <Route path="analytics" element={<Analytics />} />
       <Route path="reports" element={<Reports />} />
@@ -53,7 +53,7 @@ const AppRoutes = () => (
       <Route path="patients" element={<Patients />} />
       <Route path="triage" element={<Triage />} />
       <Route path="detect-sickness" element={<DetectSickness />} />
-      <Route path="pharmacy" element={<Pharmacy />} />
+      <Route path="pharmacy" element={<PharmacyMonitor />} />
       <Route path="profile" element={<Profile />} />
     </Route>
 
