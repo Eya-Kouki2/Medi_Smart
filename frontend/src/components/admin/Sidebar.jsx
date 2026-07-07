@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { NavLink } from "react-router-dom";
-import { FaHeartbeat, FaCopy, FaCheck, FaSignOutAlt } from "react-icons/fa";
+import { FaCopy, FaCheck, FaSignOutAlt } from "react-icons/fa";
 import api from "../../api/axios";
+import brandLogo from "../../assets/logo11.png";
 
 const ALL_NAV_ITEMS = [
   { key: "dashboard", label: "Dashboard", icon: "📊", end: true, adminOnly: false },
@@ -78,11 +79,11 @@ const Sidebar = ({ user, onLogout, role = "admin" }) => {
       {/* ── Brand ─────────────────────────────── */}
       <div className="px-4 pt-5 pb-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0 shadow-md">
-            <FaHeartbeat className="text-health-cyan text-sm" />
+          <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-md overflow-hidden p-1">
+            <img src={brandLogo} alt="Trackare Logo" className="w-full h-full object-contain" />
           </div>
           <div>
-            <p className="text-sm font-bold text-white leading-tight">MediSmart Hub</p>
+            <p className="text-sm font-bold text-white leading-tight">Trackare</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-dot shrink-0" />
               <p className="text-[10px] text-blue-200/80 font-medium">

@@ -1,4 +1,4 @@
-import { FaHeartbeat } from "react-icons/fa";
+import brandLogo from "../../assets/logo11.png";
 
 const AuthLayout = ({ title, subtitle, children }) => {
   return (
@@ -16,12 +16,12 @@ const AuthLayout = ({ title, subtitle, children }) => {
             <div className="flex flex-col items-center text-center mb-6">
               <div className="relative mb-3">
                 <div className="absolute inset-0 rounded-full bg-health-cyan/30 blur-md scale-110" />
-                <div className="relative w-11 h-11 rounded-full bg-gradient-to-br from-health-blue to-health-cyan flex items-center justify-center shadow-md shadow-health-blue/20 ring-4 ring-health-ice/60">
-                  <FaHeartbeat className="text-white text-base" />
+                <div className="relative w-11 h-11 rounded-full bg-white flex items-center justify-center shadow-md shadow-health-blue/20 ring-4 ring-health-ice/60 overflow-hidden p-1">
+                  <img src={brandLogo} alt="Trackare Logo" className="w-full h-full object-contain" />
                 </div>
               </div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-health-blue/50">
-                MediSmart Hub
+                Trackare
               </p>
               {title && <h1 className="text-xl font-bold text-health-navy mt-1">{title}</h1>}
               {subtitle && <p className="text-xs text-gray-500 mt-1.5">{subtitle}</p>}
