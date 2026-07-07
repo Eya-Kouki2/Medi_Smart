@@ -33,7 +33,6 @@
 - [Running the Project](#-running-the-project)
 - [API Overview](#-api-overview)
 - [AI Components](#-ai-components)
-- [Future Improvements](#-future-improvements)
 - [Team Members](#-team-members)
 
 ---
@@ -417,15 +416,6 @@ Trackare utilizes a distributed on-device AI system integrating Machine Learning
 * **Core Model**: Haar Cascade Classifiers.
 * **Implementation**: Uses OpenCV (`cv2.CascadeClassifier`) with the pre-trained `haarcascade_frontalface_default.xml` file.
 * **Verification**: Scans the webcam video feed upon ESP32 proximity triggers to confirm patient presence before booting up the voice triage session.
-
----
-
-## 🔮 Future Improvements
-
-* **💬 Native Multi-Language Speech Engine**: Build local language datasets (Zulu, Xhosa, Sotho, Afrikaans) using local open-source models like Vosk.
-* **📶 Decentralized Offline Mode**: Localize SQLite fallback syncs to survive public grid power cuts and web network drops.
-* **🛡️ FHIR Standard Compatibility**: Format patient schema structures to meet international FHIR (Fast Healthcare Interoperability Resources) data models.
-* **📈 Predictive Epidemic Dashboards**: Analyze triage outcome trends on geographic maps to alert local authorities of disease outbreak clusters.
 
 ---
 
