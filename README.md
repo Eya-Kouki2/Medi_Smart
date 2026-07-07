@@ -31,13 +31,10 @@
 - [Installation Guide](#-installation-guide)
 - [Configuration](#-configuration)
 - [Running the Project](#-running-the-project)
-- [Screenshots](#-screenshots)
 - [API Overview](#-api-overview)
 - [AI Components](#-ai-components)
 - [Future Improvements](#-future-improvements)
 - [Team Members](#-team-members)
-- [License](#-license)
-- [Acknowledgements](#-acknowledgements)
 
 ---
 
@@ -373,18 +370,6 @@ If you do not have the microcontroller hardware attached, trigger a fake detecti
 
 ---
 
-## 📸 Screenshots
-
-| Admin Statistics Dashboard | AI Symptom Voice Triage Screen |
-| :---: | :---: |
-| ![Dashboard Placeholder](https://via.placeholder.com/600x350.png?text=Trackare+Admin+Dashboard+Mockup) | ![Triage Placeholder](https://via.placeholder.com/600x350.png?text=AI+Triage+Voice+Assessment) |
-
-| AI Pharmacy Medication Scanner | Interactive Ward Allocation Limits |
-| :---: | :---: |
-| ![Pharmacy Scanner](https://via.placeholder.com/600x350.png?text=EasyOCR+Medicine+Scanner+Interface) | ![Overflow Warnings](https://via.placeholder.com/600x350.png?text=Real-time+Room+Capacity+Alerts) |
-
----
-
 ## 🔌 API Overview
 
 Below is the routing index mapping endpoints, operations, and authorization levels:
@@ -434,21 +419,10 @@ Below is the routing index mapping endpoints, operations, and authorization leve
 
 ## 👥 Team Members
 
-* 🎓 **Eya Kouki** — ML Pipeline Development & Frontend UI Architect
-* 🎓 **Fatma Lajmi** — Backend System Orchestrator & Hardware Integration
+* 🎓 **Eya Kouki** — Developer
+* 🎓 **Fatma Lajmi** — Developer
+* 🎓 **Ghayatelmouna Ben Khlifa** — Developer (dev with Fatma)
+* 🎓 **Mohammed Yassine Kammoun** — IoT
+* 🎓 **Hamza Touati** — IoT
 
 *A Graduation Project submitted to the Department of Software Engineering/Computer Science.*
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 💖 Acknowledgements
-
-* To our academic supervisors for guidance during the system design phase.
-* The open-source communities behind **scikit-learn**, **EasyOCR**, and **Vite** for enabling rapid development of complex AI prototypes.
-* South African healthcare workers whose resilience inspired this project's goals.
