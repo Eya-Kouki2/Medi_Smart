@@ -9,7 +9,7 @@ const ALL_NAV_ITEMS = [
   { key: "patients", label: "Patients", icon: "👥", adminOnly: false },
   { key: "detect-sickness", label: "Detect sickness", icon: "🧬", adminOnly: false },
   { key: "pharmacy", label: "Pharmacy Monitor", icon: "💊", adminOnly: false },
-  { key: "disease-classes", label: "Rooms", icon: "🏥", adminOnly: true },
+  { key: "disease-classes", label: "Disease Rooms", icon: "🏥", adminOnly: true },
   { key: "alerts", label: "Alerts", icon: "🚨", adminOnly: true },
   { key: "reports", label: "Reports", icon: "📜", adminOnly: true },
   { key: "profile", label: "Profile", icon: "👤", adminOnly: false },
