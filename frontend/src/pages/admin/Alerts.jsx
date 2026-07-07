@@ -149,7 +149,7 @@ const Alerts = () => {
                     <FaExclamationTriangle className="text-2xl animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-800">Room FULL: {room.name}</h3>
+                    <h3 className="text-xl font-bold text-slate-800">Room FULL: {getMaladieLabel(room.maladie)} <span className="text-slate-400 text-base font-semibold">Class {room.classNumber || 1}</span></h3>
                     <div className="flex flex-wrap items-center gap-3 mt-1">
                       <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold">
                         Capacity: {room.maxPatients}
@@ -161,12 +161,20 @@ const Alerts = () => {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDismiss(room._id)}
-                  className="mt-4 md:mt-0 px-6 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-xl font-bold transition-colors flex items-center gap-2"
-                >
-                  <FaCheck /> Done
-                </button>
+                <div className="mt-4 md:mt-0 flex items-center gap-3 shrink-0">
+                  <Link
+                    to="/admin/disease-classes"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-red-500 text-white hover:bg-red-600 rounded-xl font-bold transition-colors text-sm"
+                  >
+                    <FaPlus /> Manage Rooms
+                  </Link>
+                  <button
+                    onClick={() => handleDismiss(room._id)}
+                    className="px-5 py-2.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl font-bold transition-colors flex items-center gap-2 text-sm"
+                  >
+                    <FaCheck /> Done
+                  </button>
+                </div>
               </div>
             );
           })}

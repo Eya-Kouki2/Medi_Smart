@@ -3,10 +3,10 @@ const { MALADIE_VALUES } = require('../constants/maladies');
 
 const diseaseClassSchema = mongoose.Schema(
     {
-        name: {
-            type: String,
-            required: true,
-            trim: true,
+
+        classNumber: {
+            type: Number,
+            default: 1,
         },
         placeCode: {
             type: Number,

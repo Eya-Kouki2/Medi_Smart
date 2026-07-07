@@ -13,7 +13,6 @@ const SEVERITY_OPTIONS = [
 ];
 
 const emptyForm = {
-  name: "",
   placeCode: "",
   description: "",
   severity: "moderate",
@@ -62,14 +61,13 @@ const DiseaseClasses = () => {
   const resetForm = () => { setForm(emptyForm); setEditingId(null); setShowForm(false); setErrorMessage(null); };
   const openCreateForm = () => { setForm(emptyForm); setEditingId(null); setShowForm(true); setErrorMessage(null); };
   const openEditForm = (item) => {
-    setForm({ name: item.name, placeCode: item.placeCode ?? "", description: item.description || "", severity: item.severity, maladie: item.maladie || "", maxPatients: item.maxPatients || 1 });
+    setForm({ placeCode: item.placeCode ?? "", description: item.description || "", severity: item.severity, maladie: item.maladie || "", maxPatients: item.maxPatients || 1 });
     setEditingId(item._id); setShowForm(true); setErrorMessage(null);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMessage(null);
-    if (!form.name.trim()) { setErrorMessage("Name is required."); return; }
     if (!form.maladie) { setErrorMessage("Please choose a maladie."); return; }
     if (form.placeCode !== "" && (Number(form.placeCode) < 1 || Number(form.placeCode) > 200)) {
       setErrorMessage("Place code must be between 1 and 200."); return;
@@ -186,10 +184,6 @@ const DiseaseClasses = () => {
 
           <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="auth-label" htmlFor="dc-name">Name</label>
-              <input id="dc-name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="e.g. Respiratory Infection" className="auth-input" />
-            </div>
-            <div>
               <label className="auth-label" htmlFor="dc-code">Place code <span className="text-slate-400 normal-case font-normal">(optional, 1–200)</span></label>
               <input id="dc-code" type="number" min={1} max={200} value={form.placeCode} onChange={(e) => setForm((p) => ({ ...p, placeCode: e.target.value }))} placeholder="Auto-assigned if empty" className="auth-input" />
             </div>
@@ -252,12 +246,15 @@ const DiseaseClasses = () => {
                 <div className="p-5 flex-1 flex flex-col">
                   {/* Header: Title and Actions */}
                   <div className="flex items-start justify-between gap-3 mb-4">
-                    <h3 className="text-base font-bold text-health-navy break-words leading-tight flex-1">{item.name}</h3>
+                    <h3 className="text-base font-bold text-health-navy break-words leading-tight flex-1">
+                      {getMaladieLabel(item.maladie)}
+                      <span className="ml-2 text-xs font-semibold text-slate-400">Class {item.classNumber || 1}</span>
+                    </h3>
                     <div className="flex items-center gap-1 shrink-0 bg-slate-50 rounded-lg p-0.5">
-                      <button type="button" onClick={() => openEditForm(item)} className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-health-blue hover:bg-white hover:shadow-sm transition-all" aria-label={`Edit ${item.name}`}>
+                      <button type="button" onClick={() => openEditForm(item)} className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-health-blue hover:bg-white hover:shadow-sm transition-all" aria-label={`Edit Room ${item.placeCode}`}>
                         <FaEdit className="text-[11px]" />
                       </button>
-                      <button type="button" onClick={() => handleDelete(item._id)} className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-white hover:shadow-sm transition-all" aria-label={`Delete ${item.name}`}>
+                      <button type="button" onClick={() => handleDelete(item._id)} className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-white hover:shadow-sm transition-all" aria-label={`Delete Room ${item.placeCode}`}>
                         <FaTrash className="text-[11px]" />
                       </button>
                     </div>
@@ -283,12 +280,28 @@ const DiseaseClasses = () => {
                     </p>
                   )}
                   {item.maxPatients && (
-                    <p className="text-xs text-slate-600 mb-2.5 flex items-center justify-between bg-slate-50/50 p-2 rounded-lg border border-slate-50">
-                      <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full shadow-sm bg-slate-400" /> Max Patients:
-                      </span>
-                      <span className="font-bold text-health-blue">{item.maxPatients}</span>
-                    </p>
+                    <div className="mb-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold text-slate-500">Capacity</span>
+                        <span className={`text-[10px] font-black ${
+                          item.currentPatients >= item.maxPatients ? 'text-red-500' : 'text-health-blue'
+                        }`}>
+                          {item.currentPatients || 0} / {item.maxPatients}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            item.currentPatients >= item.maxPatients ? 'bg-red-400' :
+                            item.currentPatients >= item.maxPatients * 0.75 ? 'bg-amber-400' : 'bg-emerald-400'
+                          }`}
+                          style={{ width: `${Math.min(((item.currentPatients || 0) / item.maxPatients) * 100, 100)}%` }}
+                        />
+                      </div>
+                      {item.currentPatients >= item.maxPatients && (
+                        <p className="text-[9px] text-red-500 font-bold mt-1">⚠ Room at full capacity</p>
+                      )}
+                    </div>
                   )}
                   {item.description && (
                     <p className="text-xs text-slate-500 leading-relaxed flex-1 mb-3">{item.description}</p>
@@ -304,7 +317,7 @@ const DiseaseClasses = () => {
                       <button type="button" onClick={() => adjustQueue(item._id, 'decrement')} disabled={!item.currentPatients || item.currentPatients === 0} className="w-7 h-7 rounded-md bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Decrease Queue">
                         <span className="text-lg font-bold leading-none -mt-1">-</span>
                       </button>
-                      <button type="button" onClick={() => adjustQueue(item._id, 'increment')} className="w-7 h-7 rounded-md bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors" title="Increase Queue">
+                      <button type="button" onClick={() => adjustQueue(item._id, 'increment')} disabled={(item.currentPatients || 0) >= (item.maxPatients || 1)} className="w-7 h-7 rounded-md bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title={(item.currentPatients || 0) >= (item.maxPatients || 1) ? 'Room at maximum capacity' : 'Increase Queue'}>
                         <span className="text-lg font-bold leading-none -mt-0.5">+</span>
                       </button>
                       <button type="button" onClick={() => adjustQueue(item._id, 'reset')} disabled={!item.currentPatients || item.currentPatients === 0} className="px-2 h-7 rounded-md bg-red-50 text-red-600 text-[9px] font-black tracking-wider hover:bg-red-100 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed" title="Reset to 0">

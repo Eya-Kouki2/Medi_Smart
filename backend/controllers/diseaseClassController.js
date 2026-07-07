@@ -80,7 +80,7 @@ const getDiseaseClasses = async (req, res) => {
 };
 
 const createDiseaseClass = async (req, res) => {
-    const { name, placeCode, description, severity, maladie, maxPatients } = req.body;
+    const { placeCode, description, severity, maladie, maxPatients } = req.body;
 
     try {
         if (!req.userAreaId) {
@@ -90,12 +90,6 @@ const createDiseaseClass = async (req, res) => {
             });
         }
 
-        if (!name?.trim()) {
-            return res.status(400).json({
-                success: false,
-                message: 'Disease class name is required',
-            });
-        }
 
         if (!maladie || !MALADIE_VALUES.includes(maladie)) {
             return res.status(400).json({
@@ -113,8 +107,15 @@ const createDiseaseClass = async (req, res) => {
 
         const resolvedPlaceCode = await resolvePlaceCode(req.userAreaId, placeCode);
 
+        const existingCount = await DiseaseClass.countDocuments({
+            areaId: req.userAreaId,
+            maladie,
+            isActive: true,
+        });
+        const classNumber = existingCount + 1;
+
         const diseaseClass = await DiseaseClass.create({
-            name: name.trim(),
+            classNumber,
             placeCode: resolvedPlaceCode,
             description: description?.trim() || '',
             severity: severity || 'moderate',
@@ -149,7 +150,7 @@ const createDiseaseClass = async (req, res) => {
 
 const updateDiseaseClass = async (req, res) => {
     const { id } = req.params;
-    const { name, placeCode, description, severity, maladie, maxPatients } = req.body;
+    const { placeCode, description, severity, maladie, maxPatients } = req.body;
 
     try {
         const diseaseClass = await DiseaseClass.findOne({
@@ -165,7 +166,7 @@ const updateDiseaseClass = async (req, res) => {
             });
         }
 
-        if (name?.trim()) diseaseClass.name = name.trim();
+
         if (description !== undefined) diseaseClass.description = description.trim();
         if (severity) diseaseClass.severity = severity;
         if (maladie) {
@@ -243,11 +244,18 @@ const deleteDiseaseClass = async (req, res) => {
 
 const incrementPatients = async (req, res) => {
     try {
-        const diseaseClass = await DiseaseClass.findByIdAndUpdate(
-            req.params.id,
-            { $inc: { currentPatients: 1 } },
-            { new: true }
-        );
+        const diseaseClass = await DiseaseClass.findById(req.params.id);
+        if (!diseaseClass) {
+            return res.status(404).json({ success: false, message: 'Room not found' });
+        }
+        if (diseaseClass.currentPatients >= diseaseClass.maxPatients) {
+            return res.status(400).json({
+                success: false,
+                message: 'Room is at maximum capacity',
+            });
+        }
+        diseaseClass.currentPatients += 1;
+        await diseaseClass.save();
         res.status(200).json({ success: true, diseaseClass });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

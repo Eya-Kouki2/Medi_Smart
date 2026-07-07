@@ -218,40 +218,28 @@ const DetectSickness = () => {
     
     // Find all rooms matching the sickness
     const matchingRooms = currentDiseaseClasses.filter((c) => c.maladie === maladieKey);
-    let matched = matchingRooms.length > 0 ? matchingRooms[0] : undefined;
 
-    // Try to find a room that isn't full yet
-    for (const room of matchingRooms) {
-      const officialPatients = currentPatients.filter((p) => {
+    // Helper: compute total occupancy for a room (official + kiosk queue)
+    const getTotalOccupancy = (room) => {
+      const officialCount = currentPatients.filter((p) => {
         if (!p.history || p.history.length === 0) return false;
         const sortedHistory = [...p.history].sort((a, b) => new Date(b.date) - new Date(a.date));
-        const latestTriage = sortedHistory[0]?.triage;
-        return latestTriage?.suggestedClass?.placeCode === Number(room.placeCode);
+        return sortedHistory[0]?.triage?.suggestedClass?.placeCode === Number(room.placeCode);
       }).length;
-      
-      const kioskPatients = room.currentPatients || 0;
-      const total = officialPatients + kioskPatients;
-      
-      if (total < (room.maxPatients || 1)) {
-        matched = room; // Found an available room!
+      return officialCount + (room.currentPatients || 0);
+    };
+
+    // Find the FIRST room with available capacity
+    let matched = null;
+    for (const room of matchingRooms) {
+      if (getTotalOccupancy(room) < (room.maxPatients || 1)) {
+        matched = room;
         break;
       }
     }
-    
-    // Check if ALL matching rooms are full (no available room found)
-    const allFull = matchingRooms.length > 0 && (
-      matched === matchingRooms[0] &&
-      (() => {
-        const room = matchingRooms[0];
-        const officialPts = currentPatients.filter((p) => {
-          if (!p.history || p.history.length === 0) return false;
-          const sh = [...p.history].sort((a, b) => new Date(b.date) - new Date(a.date));
-          return sh[0]?.triage?.suggestedClass?.placeCode === Number(room.placeCode);
-        }).length;
-        const total = officialPts + (room.currentPatients || 0);
-        return total >= (room.maxPatients || 1);
-      })()
-    );
+
+    // All rooms full if we found matching rooms but none had capacity
+    const allFull = matchingRooms.length > 0 && matched === null;
 
     // If all rooms full, store a dashboard alert in localStorage
     if (allFull && maladieKey !== "autre") {
@@ -270,10 +258,11 @@ const DetectSickness = () => {
     }
 
     setAllRoomsFull(allFull && maladieKey !== "autre");
-    
+
     setResults({ predictions: preds, priority, matchedClass: matched, yesKeys: reportedSymptoms });
     setView("results");
 
+    // Only increment if we found an available room (never overfill)
     if (matched) {
       try {
         await api.post(`/api/disease-classes/${matched._id}/increment`);
@@ -661,17 +650,20 @@ const DetectSickness = () => {
                       #{results.matchedClass.placeCode}
                     </p>
                     <p className="text-2xl font-bold text-slate-600 mt-6">
-                      Target: {results.matchedClass.name}
+                      {results.matchedClass.maladie ? `${results.matchedClass.maladie.charAt(0).toUpperCase() + results.matchedClass.maladie.slice(1)} — Class ${results.matchedClass.classNumber || 1}` : `Room ${results.matchedClass.placeCode}`}
                     </p>
                   </div>
                 ) : allRoomsFull ? (
                   <div className="space-y-6">
-                    <span className="text-6xl sm:text-8xl">⏳</span>
-                    <p className="text-4xl sm:text-5xl font-black text-yellow-500 drop-shadow-sm">
-                      Wait just few seconds
+                    <span className="text-6xl sm:text-8xl">🚫</span>
+                    <p className="text-3xl sm:text-4xl font-black text-red-500 drop-shadow-sm">
+                      No Room Available
+                    </p>
+                    <p className="text-base text-slate-500 leading-relaxed">
+                      All rooms for this condition are currently at full capacity.
                     </p>
                     <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl px-5 py-3 text-sm font-semibold mt-4">
-                      🔔 Staff has been notified
+                      🔔 Admin has been notified to add a new room
                     </div>
                   </div>
                 ) : (
