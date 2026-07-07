@@ -92,20 +92,20 @@ const DiseaseClasses = () => {
       await loadClasses();
       resetForm();
     } catch (error) {
-      setErrorMessage(error.response?.status === 503 ? error.response.data.message : error.response?.data?.message || "Failed to save disease class.");
+      setErrorMessage(error.response?.status === 503 ? error.response.data.message : error.response?.data?.message || "Failed to save room.");
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this disease class?")) return;
+    if (!window.confirm("Delete this room?")) return;
     try {
       await api.delete(`/api/disease-classes/${id}`);
       setClasses((prev) => prev.filter((item) => item._id !== id));
       if (editingId === id) resetForm();
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || "Failed to delete disease class.");
+      setErrorMessage(error.response?.data?.message || "Failed to delete room.");
     }
   };
 
@@ -175,7 +175,7 @@ const DiseaseClasses = () => {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-base font-bold text-health-navy">
-                {editingId ? "Edit Disease Room" : "New Disease Room"}
+                {editingId ? "Edit Room" : "New Room"}
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">Fill in the classification details below.</p>
             </div>
@@ -217,7 +217,7 @@ const DiseaseClasses = () => {
             {errorMessage && <p className="sm:col-span-2 text-xs text-red-500 font-medium">{errorMessage}</p>}
             <div className="sm:col-span-2 flex gap-2 pt-1">
               <button type="submit" disabled={isSaving} className="btn-primary">
-                {isSaving ? "Saving…" : editingId ? "Update Class" : "Create Class"}
+                {isSaving ? "Saving…" : editingId ? "Update Room" : "Create Room"}
               </button>
               <button type="button" onClick={resetForm} className="btn-outline">Cancel</button>
             </div>
@@ -237,7 +237,7 @@ const DiseaseClasses = () => {
           <p className="text-sm font-bold text-health-navy">No disease rooms yet</p>
           <p className="text-xs text-slate-500 mt-1 mb-5">Create classifications to organize triage and monitoring workflows.</p>
           <button type="button" onClick={openCreateForm} className="btn-primary mx-auto">
-            <FaPlus className="text-[10px]" /> Add your first class
+            <FaPlus className="text-[10px]" /> Add your first room
           </button>
         </div>
       ) : (
@@ -266,7 +266,7 @@ const DiseaseClasses = () => {
                   {/* Prominent Place Code & Severity */}
                   <div className="flex items-center justify-between bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 mb-4">
                     <div>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Class / Room</p>
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Room</p>
                       <code className="text-xl font-mono font-black text-health-blue">#{item.placeCode}</code>
                     </div>
                     <div className="text-right">
