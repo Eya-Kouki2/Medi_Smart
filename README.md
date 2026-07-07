@@ -395,16 +395,28 @@ Below is the routing index mapping endpoints, operations, and authorization leve
 
 ## 🤖 AI Components
 
+Trackare utilizes a distributed on-device AI system integrating Machine Learning, Deep Learning OCR, Computer Vision, and Voice Interaction APIs:
+
 ### 1. Triage Symptom Classifier
 * **Core Model**: Random Forest (RF) Ensemble Classifier.
-* **Input Vector**: Array of 25 binary flags `[0, 1]` indicating the absence or presence of primary clinical symptoms (e.g., Fever, Cough, Chest Pain, Fatigue, Dyspnea).
-* **Storage Artifact**: Compiled Python Pickle File (`triage_rf_model_v2.pkl`).
-* **Inference Pipeline**: Express fires a CLI subprocess (`python backend/ml/predict.py <feature_vector>`), which runs the prediction and returns classification labels and confidence values.
+* **Input Vector**: Array of 25 binary flags `[0, 1]` corresponding to clinical symptoms (e.g. fever, chills, cough, breathlessness).
+* **Storage Artifact**: Serialized python pickle file (`triage_rf_model_v2.pkl`) loaded dynamically using `joblib`.
+* **Execution**: Node.js executes a CLI subprocess wrapper (`predict.py`) that returns prediction classes and holds diagnostic logic.
 
-### 2. OCR Medicine Scanner
-* **Core Model**: EasyOCR (Deep Learning framework based on PyTorch architecture).
-* **Image Processing**: OpenCV filters raw images to boost text contrast.
-* **Extraction Strategy**: Regular Expression (regex) patterns parse the resulting OCR text dump to filter out dosage measurements (e.g. `500mg`, `10ml`) and expiry patterns (`MM/YYYY` or `DD-MM-YYYY`).
+### 2. Deep OCR Medicine Scanner (`ai_pipeline.py`)
+* **Core Model**: EasyOCR Engine (PyTorch-based Deep Learning Text Recognition).
+* **Geometric Label Detection**: Evaluates a weighted geometric surface area calculation ($width \times height \times confidence$) for each bounding box to identify the dominant brand text and filter packaging jargon noise.
+* **OpenCV Image Rotation Pipeline**: If the initial scan fails to identify a date, the image is rotated (90°, 180°, 270°) using OpenCV (`cv2.rotate`) to capture rotated and vertical label blocks.
+* **Semantic Date Disambiguation**: Uses a proximity-based distance algorithm mapping English and French label markers (such as `EXP`, `DLU`, `DLC`, `UAV`, `MFG`, `FAB`) to resolve expiration vs. manufacture date stamps.
+
+### 3. Voice Interaction Subsystem (`triage_kiosk.py`)
+* **Speech Synthesis (Text-to-Speech)**: Uses the `pyttsx3` engine for offline text-to-speech voice generation. It runs in a separate process to avoid thread COM/run-loop deadlocks.
+* **Speech Recognition (Speech-to-Text)**: Leverages `SpeechRecognition` combined with the Google Speech API to transcribe patient voice inputs. It decodes speech variables (such as *"Oui"* / *"Non"*) to control UI state.
+
+### 4. Computer Vision Face Detection
+* **Core Model**: Haar Cascade Classifiers.
+* **Implementation**: Uses OpenCV (`cv2.CascadeClassifier`) with the pre-trained `haarcascade_frontalface_default.xml` file.
+* **Verification**: Scans the webcam video feed upon ESP32 proximity triggers to confirm patient presence before booting up the voice triage session.
 
 ---
 
