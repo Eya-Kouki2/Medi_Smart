@@ -419,10 +419,10 @@ Below is the routing index mapping endpoints, operations, and authorization leve
 
 ## 👥 Team Members
 
-* 🎓 **Eya Kouki** — Dev Stack
-* 🎓 **Fatma Lajmi** — AI Stack
-* 🎓 **Ghayatelmouna Ben Khlifa** — AI Stack
-* 🎓 **Mohammed Yassine Kammoun** — IoT & AI Stack
-* 🎓 **Hamza Touati** — IoT & AI Stack
+* 🎓 **Eya Kouki** — [LinkedIn](https://www.linkedin.com/in/kouki-eya-746b0b337/) | [koukieya43@gmail.com](mailto:koukieya43@gmail.com)
+* 🎓 **Fatma Lajmi** — [LinkedIn](https://www.linkedin.com/in/fatma-lajmi/) | [Lajmifatma10@gmail.com](mailto:Lajmifatma10@gmail.com)
+* 🎓 **Ghayatelmouna Ben Khlifa** — [LinkedIn](https://www.linkedin.com/in/ghayat-el-mouna-ben-khalifa-45609021a/)
+* 🎓 **Mohammed Yassine Kammoun** — [LinkedIn](https://www.linkedin.com/in/mohamed-yassine-kammoun-446a592a7/) | [kammounmohammedyassine@gmail.com](mailto:kammounmohammedyassine@gmail.com)
+* 🎓 **Hamza Touati** — [LinkedIn](https://www.linkedin.com/in/touati-hamza/) | [hamzatouati425@gmail.com](mailto:hamzatouati425@gmail.com)
 
 *A Graduation Project submitted to the Department of Software Engineering/Computer Science.*
