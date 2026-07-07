@@ -14,28 +14,13 @@
 
 ## ❗ The Problem
 
-Modern hospitals and clinics face critical bottlenecks in patient management:
-
-1. **Slow Manual Triage**: Nurses manually assess every arriving patient, leading to long waiting queues and delayed care — especially dangerous in emergency scenarios.
-2. **No Intelligent Room Assignment**: Staff must manually track which rooms are available for which disease, with no automatic routing to the right department.
-3. **Pharmacy Inefficiency**: Medication stock is tracked manually, with no automated scanning or expiry monitoring, leading to errors and wasted resources.
-4. **Disconnected Systems**: Patient data, triage results, room assignments, and pharmacy records live in separate places, forcing staff to switch between multiple tools.
-5. **No Contactless Patient Interaction**: All triage interactions require physical touchscreen input or nurse involvement, slowing down the process and increasing exposure risk.
+Healthcare facilities in South Africa, particularly those serving rural and resource-constrained communities, face significant challenges in managing infectious diseases and medicine inventories. Patient triage is often performed manually, resulting in long waiting times, delayed diagnosis, increased risk of disease transmission, and inefficient allocation of isolation rooms. At the same time, pharmacy inventory management relies heavily on manual record-keeping, leading to expired medicines, stock shortages, and medication wastage. These limitations reduce the quality and efficiency of healthcare delivery while increasing the workload of medical staff.
 
 ---
 
 ## ✅ Our Solution
 
-**MediSmart Hub** is a unified, intelligent clinical platform that automates and streamlines hospital operations through AI and voice technology.
-
-### How we solve each problem:
-| Problem | Solution |
-| :--- | :--- |
-| Slow triage | AI symptom detection with 25-question ML model (`triage_rf_model_v2.pkl`) |
-| No room assignment | Automatic disease-to-room matching with real-time availability tracking |
-| Pharmacy inefficiency | OCR-based medicine scanner (`pharmacy_scan.py`) extracts drug info from box images |
-| Disconnected systems | Single unified dashboard with role-based access for all staff |
-| No contactless interaction | Physical voice kiosk (`triage_kiosk.py`) that mirrors results live on the dashboard |
+MediSmart Hub is an AI-powered smart healthcare platform that automates patient triage and pharmacy management. The system uses IoT sensors, computer vision, voice interaction, and machine learning to perform a contactless symptom assessment, predict the patient's disease, and automatically assign the appropriate treatment or isolation room while generating alerts when room capacity is exceeded. In parallel, it employs OCR technology to digitize medicine information from packaging, enabling faster and more accurate inventory management. By integrating these technologies into a single platform, MediSmart Hub improves clinical decision-making, reduces human error, optimizes healthcare resources, and enhances patient safety in South African healthcare facilities.
 
 ---
 
