@@ -1,4 +1,4 @@
-# MediSmart Hub 🏥
+# Trackare 🏥
 
 ## 📋 Table of Contents
 - [The Problem](#-the-problem)
@@ -20,7 +20,7 @@ Healthcare facilities in South Africa, particularly those serving rural and reso
 
 ## ✅ Our Solution
 
-MediSmart Hub is an AI-powered smart healthcare platform that automates patient triage and pharmacy management. The system uses IoT sensors, computer vision, voice interaction, and machine learning to perform a contactless symptom assessment, predict the patient's disease, and automatically assign the appropriate treatment or isolation room while generating alerts when room capacity is exceeded. In parallel, it employs OCR technology to digitize medicine information from packaging, enabling faster and more accurate inventory management. By integrating these technologies into a single platform, MediSmart Hub improves clinical decision-making, reduces human error, optimizes healthcare resources, and enhances patient safety in South African healthcare facilities.
+Trackare is an AI-powered smart healthcare platform that automates patient triage and pharmacy management. The system uses IoT sensors, computer vision, voice interaction, and machine learning to perform a contactless symptom assessment, predict the patient's disease, and automatically assign the appropriate treatment or isolation room while generating alerts when room capacity is exceeded. In parallel, it employs OCR technology to digitize medicine information from packaging, enabling faster and more accurate inventory management. By integrating these technologies into a single platform, Trackare improves clinical decision-making, reduces human error, optimizes healthcare resources, and enhances patient safety in South African healthcare facilities.
 
 ---
 
@@ -170,7 +170,7 @@ JWT_SECRET=your_long_random_secret_key
 CLIENT_URL=http://localhost:5173
 EMAIL_USER=your_gmail@gmail.com
 EMAIL_PASS=your_gmail_app_password
-EMAIL_NAME=MediSmart Hub
+EMAIL_NAME=Trackare
 ```
 
 ---
