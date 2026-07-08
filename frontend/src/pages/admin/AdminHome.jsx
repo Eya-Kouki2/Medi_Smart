@@ -394,17 +394,17 @@ const AdminHome = () => {
             {/* Card 2 */}
             <div className="bg-white rounded-[14px] p-4 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden group hover:border-health-blue/20 hover:shadow-md transition-all">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Consultations</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Detect Sickness</p>
                 <div className="w-8 h-8 rounded-lg bg-blue-50/50 border border-blue-50 flex items-center justify-center text-blue-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                   <FaUserMd className="text-[13px]" />
                 </div>
               </div>
-              <p className="text-[26px] font-black text-health-navy tracking-tight leading-none mb-3">{stats.todayTriageCount}</p>
+              <p className="text-[26px] font-black text-health-navy tracking-tight leading-none mb-3">{stats.totalTriage.toLocaleString()}</p>
               <div className="flex items-center gap-1.5 pt-3 border-t border-slate-50/80">
                 <span className="inline-flex items-center justify-center bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide">
-                  +4
+                  +{stats.todayTriageCount}
                 </span>
-                <span className="text-[10px] font-medium text-slate-400">vs yesterday</span>
+                <span className="text-[10px] font-medium text-slate-400">today</span>
               </div>
             </div>
 
