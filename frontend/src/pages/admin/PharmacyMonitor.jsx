@@ -125,6 +125,9 @@ export default function PharmacyMonitor() {
       setError(msg);
     } finally {
       setScanning(false);
+      // Reset the file input so the same or any new image can be uploaded immediately
+      // without the user needing to refresh the page first.
+      if (fileRef.current) fileRef.current.value = "";
     }
   }, []);
 

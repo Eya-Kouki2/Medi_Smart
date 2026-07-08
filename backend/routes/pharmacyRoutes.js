@@ -78,8 +78,9 @@ router.post('/scan', upload.single('image'), (req, res) => {
 
     const imagePath = req.file.path;
     const scriptPath = path.join(__dirname, '..', 'ml', 'pharmacy_scan.py');
-
-    const pythonProcess = spawn('python', [scriptPath, imagePath]);
+    const pythonProcess = spawn('python', [scriptPath, imagePath], {
+        env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+    });
 
     let dataString = '';
     let errorString = '';
@@ -102,6 +103,10 @@ router.post('/scan', upload.single('image'), (req, res) => {
             
             if (result.error) return res.status(500).json({ error: result.error });
             
+            console.log("\n====== [Pharmacy AI Scan Completed] ======");
+            console.log(JSON.stringify(result, null, 2));
+            console.log("==========================================");
+
             // NOTE: We no longer auto-save here. The frontend will call /accept.
             res.json(result);
         } catch (e) {

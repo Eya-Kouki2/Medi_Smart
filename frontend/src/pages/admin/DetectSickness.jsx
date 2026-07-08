@@ -290,9 +290,13 @@ const DetectSickness = () => {
       /* All done → compute using Python ML model */
       if (isSubmittingRef.current) return;   // guard against double-fire
       isSubmittingRef.current = true;
+      setView("analyzing");
       try {
         const features = QUESTIONS.map(q => updated[q.key] ? 1 : 0);
-        const res = await api.post("/api/ml/predict", { features });
+        const [res] = await Promise.all([
+          api.post("/api/ml/predict", { features }),
+          new Promise((r) => setTimeout(r, 2500))
+        ]);
         const mlPrediction = res.data.prediction; // 'AIDS', 'Malaria', 'Tuberculosis', 'safe'
         const yesKeys = Object.keys(updated).filter((k) => updated[k]);
         
@@ -301,6 +305,7 @@ const DetectSickness = () => {
       } catch (err) {
         console.error("ML prediction error:", err);
         alert("Failed to run the diagnostic model. Please ensure the backend ML service is running.");
+        setView("quiz");
       } finally {
         isSubmittingRef.current = false;
       }
@@ -352,6 +357,8 @@ const DetectSickness = () => {
         // ── Final result from kiosk ───────────────────────────────
         if (data.type === 'KIOSK_RESULT' && data.payload) {
           console.log("Received Kiosk Result:", data.payload);
+          setView("analyzing");
+          await new Promise((r) => setTimeout(r, 2500));
           const { prediction, confidence, symptoms_reported } = data.payload;
           await processPrediction(prediction, confidence, symptoms_reported || []);
         }
@@ -607,6 +614,22 @@ const DetectSickness = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ══ ANALYZING STATE ════════════════════════════════════ */}
+        {view === "analyzing" && (
+          <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in h-full flex-1">
+            <div className="w-24 h-24 mb-8 relative flex items-center justify-center mx-auto">
+              {/* Outer spinning dashed ring */}
+              <div className="absolute inset-0 border-4 border-dashed border-[#0096c7] rounded-full animate-[spin_3s_linear_infinite]" />
+              {/* Inner fast spinning solid ring */}
+              <div className="absolute inset-2 border-4 border-[#03045e] border-t-transparent rounded-full animate-spin" />
+              {/* Center icon */}
+              <span className="text-3xl relative z-10 animate-pulse">🧠</span>
+            </div>
+            <h2 className="text-3xl font-black text-[#03045e] mb-3">Analyzing Symptoms</h2>
+            <p className="text-slate-500 font-medium max-w-sm mx-auto">Please wait while the AI diagnostic model evaluates the responses...</p>
           </div>
         )}
 

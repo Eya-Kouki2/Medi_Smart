@@ -20,8 +20,8 @@
 
 ## 📋 Table of Contents
 
-- [Project Overview](#-project-overview)
 - [Problem Statement](#-problem-statement)
+- [Project Overview](#-project-overview)
 - [Objectives](#-objectives)
 - [Key Features](#-key-features)
 - [System Workflow](#-system-workflow)
@@ -37,23 +37,22 @@
 
 ---
 
-## 🔍 Project Overview
-
-**Trackare** is an AI-driven, smart healthcare system designed to digitize and automate critical clinical workflows in resource-constrained medical facilities. Originally designed for rural community clinics in South Africa, Trackare addresses operational bottlenecks by combining IoT-based patient presence detection, contactless speech-to-text (STT) and text-to-speech (TTS) voice screening, deep-learning based optical character recognition (OCR), and machine learning triage classifiers.
-
-The platform provides a dual-solution:
-1. **Automated Patient Triage (Detect Sickness)**: Pre-screens patients via voice or touch, predicts probable conditions, and assigns the correct isolation/treatment room.
-2. **Pharmacy Monitor**: Speeds up inventory updates by parsing drug packaging images via OCR to extract medicine names, dosages, and expiration dates.
-
----
-
 ## ❗ Problem Statement
 
 Public healthcare clinics in developing regions face chronic resource shortages. This manifests in several critical areas:
 * **Manual Triage Bottlenecks**: A single nurse must manually screen and take symptom histories for hundreds of patients daily, causing long queues and delaying urgent care.
 * **Cross-Infection Vulnerabilities**: Waiting areas cluster patients with diverse symptoms (e.g., respiratory vs. gastrointestinal), allowing infectious diseases to propagate.
-* **Bed & Ward Management**: Wards are monitored on paper sheets, making real-time occupancy updates and overflow detection impossible.
-* **Inefficient Medicine Ingest**: Pharmacists enter expiration dates, brand details, and dosages manually, leading to human entry errors, overlooked expired stocks, and medication shortages.
+* **Inefficient Medicine Ingest**: Manual inventory management leads to medicine and vaccine waste, stockouts, and reduced healthcare efficiency.
+
+---
+
+## 🔍 Project Overview
+
+**Trackare** is an AI-driven, smart healthcare system designed to digitize and automate critical clinical workflows in resource-constrained medical facilities. Originally designed for community clinics in South Africa, Trackare addresses operational bottlenecks by combining IoT-based patient presence detection, contactless speech-to-text (STT) and text-to-speech (TTS) voice screening, deep-learning based optical character recognition (OCR), and machine learning triage classifiers.
+
+The platform provides a dual-solution:
+1. **Automated Patient Triage (Detect Sickness)**: Pre-screens patients via voice or touch, predicts probable conditions, and assigns the correct isolation/treatment room.
+2. **Pharmacy Monitor**: Speeds up inventory updates by parsing drug packaging images via OCR to extract medicine names, dosages, and expiration dates.
 
 ---
 
@@ -423,8 +422,8 @@ Trackare utilizes a distributed on-device AI system integrating Machine Learning
 
 * 🎓 **Eya Kouki** — [LinkedIn](https://www.linkedin.com/in/kouki-eya-746b0b337/) | [koukieya43@gmail.com](mailto:koukieya43@gmail.com)
 * 🎓 **Fatma Lajmi** — [LinkedIn](https://www.linkedin.com/in/fatma-lajmi/) | [Lajmifatma10@gmail.com](mailto:Lajmifatma10@gmail.com)
-* 🎓 **Ghayatelmouna Ben Khlifa** — [LinkedIn](https://www.linkedin.com/in/ghayat-el-mouna-ben-khalifa-45609021a/)
+* 🎓 **Ghayatelmouna Ben Khlifa** — [LinkedIn](https://www.linkedin.com/in/ghayat-el-mouna-ben-khalifa-45609021a/) | [ghaya.benkhalifa@ieee.org](mailto:ghaya.benkhalifa@ieee.org)
 * 🎓 **Mohammed Yassine Kammoun** — [LinkedIn](https://www.linkedin.com/in/mohamed-yassine-kammoun-446a592a7/) | [kammounmohammedyassine@gmail.com](mailto:kammounmohammedyassine@gmail.com)
 * 🎓 **Hamza Touati** — [LinkedIn](https://www.linkedin.com/in/touati-hamza/) | [hamzatouati425@gmail.com](mailto:hamzatouati425@gmail.com)
 
-*A Graduation Project submitted to the Department of Software Engineering/Computer Science.*
+*hot competition ies hubs and nodes*

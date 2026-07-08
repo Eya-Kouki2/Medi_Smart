@@ -14,7 +14,9 @@ router.post('/predict', (req, res) => {
     const scriptPath = path.join(__dirname, '..', 'ml', 'predict.py');
 
     // Make sure we use the python command that has joblib/scikit-learn installed
-    const pythonProcess = spawn('python', [scriptPath, featuresString]);
+    const pythonProcess = spawn('python', [scriptPath, featuresString], {
+        env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+    });
 
     let dataString = '';
     let errorString = '';

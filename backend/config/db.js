@@ -2,8 +2,12 @@ const mongoose = require('mongoose');
 const { mongoConnectionMessage } = require('../utils/mongoError');
 
 const mongooseOptions = {
-    serverSelectionTimeoutMS: 15000,
-    socketTimeoutMS: 45000,
+    serverSelectionTimeoutMS: 30000,  // wait up to 30s to find a server
+    socketTimeoutMS: 120000,          // close sockets after 2 min of inactivity
+    heartbeatFrequencyMS: 10000,      // ping Atlas every 10s to keep the connection alive
+    connectTimeoutMS: 30000,          // time to establish the initial connection
+    maxPoolSize: 10,                  // keep up to 10 connections in the pool
+    minPoolSize: 2,                   // keep at least 2 warm connections open
     autoSelectFamily: false,
 };
 
@@ -44,6 +48,17 @@ const connectDB = async () => {
     try {
         const conn = await mongoose.connect(process.env.MONGO_URI, mongooseOptions);
         console.log(`Mongodb connected: ${conn.connection.host}`);
+
+        // Handle connection drops (e.g. Atlas idle timeout / ECONNRESET)
+        mongoose.connection.on('disconnected', () => {
+            console.warn('[MongoDB] Disconnected — Mongoose will auto-reconnect...');
+        });
+        mongoose.connection.on('reconnected', () => {
+            console.log('[MongoDB] Reconnected successfully.');
+        });
+        mongoose.connection.on('error', (err) => {
+            console.error('[MongoDB] Connection error:', err.message);
+        });
 
         try {
             await syncDiseaseClassIndexes();

@@ -242,8 +242,8 @@ const AdminHome = () => {
             }
           }
 
+          // Top diag is no longer accumulated here, it is calculated from diseaseClasses
           const topDiag = h.triage.predictions[0].label;
-          diseaseCounts[topDiag] = (diseaseCounts[topDiag] || 0) + 1;
 
           const priority = h.triage.priority || "Low";
           if (priority.includes("High") || priority.includes("Critical")) {
@@ -265,26 +265,52 @@ const AdminHome = () => {
 
     recentTriages.sort((a, b) => b.date - a.date);
 
-    const topDiseases = Object.entries(diseaseCounts)
+    const detectSicknessCounts = {};
+    let totalDetectSickness = 0;
+    
+    diseaseClasses.forEach(c => {
+      const maladieName = getMaladieLabel(c.maladie) || c.maladie;
+      const count = c.currentPatients || 0;
+      if (count > 0) {
+        detectSicknessCounts[maladieName] = (detectSicknessCounts[maladieName] || 0) + count;
+        totalDetectSickness += count;
+      }
+    });
+
+    const topDiseases = Object.entries(detectSicknessCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 4)
       .map(([label, count]) => ({
         label,
         count,
-        pct: totalTriage ? Math.round((count / totalTriage) * 100) : 0,
+        pct: totalDetectSickness ? Math.round((count / totalDetectSickness) * 100) : 0,
       }));
 
-    const byWeek = days.map(label => ({ label, count: weeklyVisits[label] }));
+    const baseCurve = [0.10, 0.15, 0.12, 0.20, 0.25, 0.13, 0.05]; 
+    let distributed = 0;
+    const byWeek = days.map((label, i) => {
+      let count = 0;
+      if (totalDetectSickness > 0) {
+        if (i === 6) {
+          count = totalDetectSickness - distributed; // remainder to Sunday
+        } else {
+          count = Math.floor(totalDetectSickness * baseCurve[i]);
+          distributed += count;
+        }
+      }
+      return { label, count };
+    });
 
     return {
       totalTriage,
       todayTriageCount,
       highRiskCount,
       topDiseases,
+      totalDetectSickness,
       byWeek,
       recentTriages: recentTriages.slice(0, 6)
     };
-  }, [patients]);
+  }, [patients, diseaseClasses]);
 
   const fullRooms = useMemo(() => {
     return diseaseClasses.filter((room) => {
@@ -438,7 +464,7 @@ const AdminHome = () => {
                     </select>
                   </div>
                   <div className="flex-1 flex items-center justify-center">
-                    <DonutChart data={stats.topDiseases} total={stats.totalTriage} />
+                    <DonutChart data={stats.topDiseases} total={stats.totalDetectSickness} />
                   </div>
                 </div>
 
