@@ -72,13 +72,22 @@ const upload = multer({
     limits: { fileSize: 15 * 1024 * 1024 }, // 15 MB cap
 });
 
+const pythonExecutable = process.env.PYTHON_BIN
+    || (process.platform === 'win32'
+        ? path.join(__dirname, '..', '..', '.venv', 'Scripts', 'python.exe')
+        : 'python3');
+
 /* ── POST /api/pharmacy/scan ─ Accept an image, run ai_pipeline ── */
 router.post('/scan', upload.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No image file uploaded' });
 
     const imagePath = req.file.path;
     const scriptPath = path.join(__dirname, '..', 'ml', 'pharmacy_scan.py');
-    const pythonProcess = spawn('python', [scriptPath, imagePath], {
+
+    console.log(`[Pharmacy] Scan received: ${path.basename(imagePath)}`);
+    console.log(`[Pharmacy] Using Python: ${pythonExecutable}`);
+
+    const pythonProcess = spawn(pythonExecutable, [scriptPath, imagePath], {
         env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
     });
 
@@ -106,6 +115,7 @@ router.post('/scan', upload.single('image'), (req, res) => {
             console.log("\n====== [Pharmacy AI Scan Completed] ======");
             console.log(JSON.stringify(result, null, 2));
             console.log("==========================================");
+            console.log(`[Pharmacy] Scan finished successfully: ${result.drug_name || 'UNKNOWN'}`);
 
             // NOTE: We no longer auto-save here. The frontend will call /accept.
             res.json(result);

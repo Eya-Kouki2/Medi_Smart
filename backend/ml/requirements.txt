@@ -1,0 +1,10 @@
+easyocr
+Flask
+joblib
+opencv-python
+Pillow
+PyAudio
+pyttsx3
+requests
+scikit-learn
+SpeechRecognition

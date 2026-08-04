@@ -238,14 +238,15 @@ Make sure your workstation contains:
 * **Node.js** `v18.x` or higher
 * **MongoDB** server local instance or a MongoDB Atlas Cloud account
 * **Python** `3.10` or `3.11`
+* **Ollama** with the `glm-ocr` and `llava` models pulled for pharmacy scans
 * **Git** command utility
 
 ---
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/Eya-Kouki2/Medi_Smart.git
-cd Medi_Smart
+git clone <your-repo-url>
+cd trackare
 ```
 
 ---
@@ -255,6 +256,8 @@ Install the root workspace package dependencies (Express, Mongoose, JWT utilitie
 ```bash
 npm install
 ```
+
+If you want to run the backend with PM2 cluster mode for load balancing, PM2 is already included as a project dependency. The `start:pm2` script will work after the install above.
 
 ---
 
@@ -269,10 +272,12 @@ cd ..
 ---
 
 ### Step 4: Python AI and Hardware Dependencies
-Move to the machine learning subfolder and run `pip install` to load the libraries:
+Create and use the project-local Python environment, then install the ML dependencies from `requirements.txt`:
 ```bash
-cd backend/ml
-pip install opencv-contrib-python==4.10.0.84 pyttsx3 SpeechRecognition joblib requests flask scikit-learn PyAudio easyocr
+py -m venv .venv
+.venv\Scripts\activate
+py -m pip install --upgrade pip
+py -m pip install -r backend/ml/requirements.txt
 ```
 
 > [!IMPORTANT]
@@ -282,6 +287,7 @@ pip install opencv-contrib-python==4.10.0.84 pyttsx3 SpeechRecognition joblib re
 >    pip install PyAudio-0.2.13-cp310-cp310-win_amd64.whl
 >    ```
 > 2. **OpenCV Version Control**: You **must** install `opencv-contrib-python==4.10.0.84`. OpenCV `5.x` removes the `CascadeClassifier` feature used by our facial verification pipeline.
+> 3. **Pharmacy OCR Runtime**: The pharmacy upload route calls `.venv\\Scripts\\python.exe` directly on Windows. If you use a different interpreter, set `PYTHON_BIN` in the backend environment.
 
 ---
 
@@ -333,6 +339,26 @@ Start Node Express API via nodemon watcher:
 npm run dev
 ```
 *Expected Log output:* `Server is running on port 5000`
+
+If you want to use PM2 load balancing instead of nodemon:
+```bash
+npm run start:pm2
+```
+
+### Terminal 1b: Backend Server with PM2 Load Balancing
+Use PM2 cluster mode when you want the backend to spread requests across CPU cores:
+```bash
+# Executed from root directory
+npm run start:pm2
+```
+*Expected Behavior:* PM2 starts multiple Node workers in cluster mode and balances traffic across them.
+
+To inspect or stop the process:
+```bash
+pm2 status
+pm2 logs trackare-backend
+pm2 stop trackare-backend
+```
 
 ---
 
