@@ -68,14 +68,14 @@ The platform provides a dual-solution:
 ## ✨ Key Features
 
 * **🔐 Role-Based Access Control (RBAC)**: Secure access tailored to four specific roles (`Admin`, `Nurse`, `Triage`, `Pharmacy`) utilizing HTTP-only cookie-based JWT sessions.
-* **🌲 Machine Learning Triage Engine**: A Random Forest classifier trained to parse 25 clinical symptoms and output diagnoses mapped to dedicated clinic rooms.
-* **🎤 Triple Triage Modes**:
+* **🌲 Machine Learning Triage Engine**: A Random Forest classifier stored in `triage_rf_model_v2.pkl` and served through `predict.py` to map 25 symptoms to a disease label.
+* **🎤 Triage Kiosk Service**: A Flask-based voice kiosk (`triage_kiosk.py`) that uses OpenCV, pyttsx3, and SpeechRecognition to guide the patient through the symptom flow.
   * **Manual Web Form**: Quick checkbox checklist for medical staff.
   * **Browser Voice Mode**: Hands-free screen navigation using local French voice commands (`Oui` / `Non`).
-  * **Physical AI Kiosk**: Proximity-activated kiosk linking webcam, voice synthesis, and real-time dashboard mirroring.
-* **📡 Real-Time Dashboard Mirroring**: Implemented via Server-Sent Events (SSE), allowing administrators to see a live mirror of what a patient is answering at the kiosk.
-* **💊 Intelligent Pharmacy OCR**: EasyOCR scanner that extracts crucial packaging details (Drug Name, Strength, Expiry Date) to bypass manual data entry.
-* **🚨 Live Room Alert System**: Warns triage nurses and shifts patients to a hold state when assigned disease-isolation rooms exceed threshold limits.
+  * **Physical AI Kiosk**: Proximity-activated kiosk linking webcam, voice synthesis, and live dashboard mirroring.
+* **📡 Real-Time Dashboard Mirroring**: Server-Sent Events stream kiosk progress and final results to connected dashboards.
+* **💊 Pharmacy OCR Pipeline**: Upload a medicine image, run local Ollama OCR (`glm-ocr`) and extraction (`llava`) through `pharmacy_scan.py` and `pharmacy.py`, then stage the parsed result before saving.
+* **🚨 Live Room Alert System**: Broadcasts kiosk updates and final predictions to connected dashboard clients.
 
 ---
 
@@ -108,9 +108,9 @@ The platform provides a dual-solution:
 
 ### 2. The Pharmacy Scan Flow
 1. A clinic pharmacist takes an image of a medicine container and uploads it via the **Pharmacy Monitor** UI.
-2. The Node backend routes the image to the **OCR Processor (`pharmacy_scan.py`)**.
-3. EasyOCR parses the text blocks, running regular expression utilities to segment the **Medication Name**, **Dosage Strength**, and **Expiration Date**.
-4. The output is placed in a browser-cached *Pending Scans* staging grid. The pharmacist reviews the results, clicks checkmark (✅) to confirm, and hits **Accept All** to write the records directly to MongoDB.
+2. The Node backend stores the upload in `backend/ml/uploads/` and launches the local Python wrapper `pharmacy_scan.py` with the project venv interpreter.
+3. `pharmacy_scan.py` calls `pharmacy.py`, which preprocesses the image, sends it to Ollama `glm-ocr` for OCR, then uses `llava` to extract `drug_name`, `strength`, and `expiry_date`.
+4. The parsed result is returned to the browser as a pending scan item. The pharmacist reviews it, then clicks **Accept** or **Accept All** to write the verified records to MongoDB.
 
 ---
 
@@ -134,7 +134,7 @@ graph TD
     subgraph Backend Services ["Backend APIs & Processors"]
         Express[Express.js Server]:::server
         MLPredict[Python Triage Model Interface]:::py
-        EasyOCR[Python OCR Engine]:::py
+      PharmacyOCR[Ollama OCR / Extraction Pipeline]:::py
     end
 
     subgraph Hardware Layer ["Physical Triage Kiosk"]
@@ -160,8 +160,8 @@ graph TD
     
     %% AI Pipeline
     Express -- CLI Invocation --> MLPredict
-    Express -- File Upload --> EasyOCR
-    EasyOCR -- Extracted Metadata JSON --> Express
+    Express -- File Upload --> PharmacyOCR
+    PharmacyOCR -- Extracted Metadata JSON --> Express
 ```
 
 ---
@@ -175,11 +175,13 @@ graph TD
 | **Styling** | Tailwind CSS | `v3.x` | Utility-first CSS class compiler for constructing modern responsive dashboards. |
 | **Backend API** | Node.js / Express | `v18.x` / `v4.x` | Event-driven, asynchronous requests handling (crucial for SSE streams). |
 | **Database** | MongoDB | Latest Atlas | Scalable document schema structure optimized for logs, audit trails, and inventory files. |
-| **ML Engine** | scikit-learn | `v1.x` | Provides the production Random Forest classifier for disease classification. |
-| **OCR Utility** | EasyOCR | Latest | PyTorch-powered deep learning optical recognition capable of recognizing multi-font medical packages. |
-| **Computer Vision** | OpenCV | `v4.10.x` | Accesses camera feeds, handles video processing, and utilizes face classifiers. |
+| **ML Engine** | scikit-learn + joblib | `v1.x` | Loads the trained Random Forest classifier used by `predict.py`. |
+| **OCR / LLM** | Ollama + `glm-ocr` + `llava` | Local | Extracts medicine text and structured fields from package images in the pharmacy pipeline. |
+| **Python Imaging** | Pillow + Requests | Latest | Preprocesses medicine images and sends OCR/extraction requests to Ollama. |
+| **Computer Vision** | OpenCV | `v4.10.x` | Accesses camera feeds and handles face detection / image rotation processing. |
 | **Speech Synthesizer** | pyttsx3 | Latest | Offline TTS framework offering responsive voice generation without internet lag. |
-| **STT Engine** | SpeechRecognition | Latest | Python voice gateway bridging local microphone streams to Google Speech API. |
+| **STT Engine** | SpeechRecognition | Latest | Python voice gateway bridging local microphone streams to the kiosk flow. |
+| **Web Service** | Flask | Latest | Hosts the local presence endpoint used by the kiosk service on port `5001`. |
 | **Microcontroller** | ESP32 | N/A | Low cost, low energy microcontroller mapping external sensor triggers. |
 
 ---
@@ -196,9 +198,10 @@ Trackare/
 │   ├── middleware/           # Auth validation and route permission guards
 │   ├── ml/                   # Machine learning models & Python assets
 │   │   ├── triage_rf_model_v2.pkl # Trained Random Forest ML model pickle file
-│   │   ├── triage_kiosk.py   # Physical kiosk logic (ESP32 control, OpenCV, TTS/STT)
-│   │   ├── pharmacy_scan.py  # EasyOCR wrapper parsing medication packaging
-│   │   └── predict.py        # CLI diagnostic classifier wrapper
+│   │   ├── triage_kiosk.py   # Flask kiosk service, ESP32 presence handling, OpenCV, TTS/STT
+│   │   ├── pharmacy.py       # Ollama-powered OCR and medicine data extraction pipeline
+│   │   ├── pharmacy_scan.py  # CLI wrapper that runs pharmacy.py and prints JSON
+│   │   ├── predict.py        # CLI diagnostic classifier wrapper
 │   ├── models/               # MongoDB Mongoose collection schemas
 │   │   ├── User.js           # User profiles with access level roles
 │   │   ├── Patient.js        # Medical history data logs
@@ -240,6 +243,12 @@ Make sure your workstation contains:
 * **Python** `3.10` or `3.11`
 * **Ollama** with the `glm-ocr` and `llava` models pulled for pharmacy scans
 * **Git** command utility
+
+To prepare the Ollama models after installing Ollama:
+```bash
+ollama pull glm-ocr
+ollama pull llava
+```
 
 ---
 
@@ -396,42 +405,42 @@ If you do not have the microcontroller hardware attached, trigger a fake detecti
 
 ## 🔌 API Overview
 
-Below is the routing index mapping endpoints, operations, and authorization levels:
+Below is the routing index mapping endpoints, callers, and behavior:
 
-| Method | Endpoint | Allowed Roles | Description |
+| Method | Endpoint | Caller | Description |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/signup` | Public | Registers clinic accounts. Required clinic signup code: `MSH-XXXXXX`. |
-| `POST` | `/api/auth/login` | Public | Authenticates credentials and sets HTTP-only session cookies. |
-| `POST` | `/api/auth/logout` | Public | Clears cookies and terminates token sessions. |
-| `GET` | `/api/patients` | `Admin`, `Nurse` | Retreives clinical records for registered patients. |
-| `POST` | `/api/patients` | `Admin`, `Nurse` | Creates a new patient record. |
-| `GET` | `/api/disease-classes`| `Admin`, `Nurse`, `Triage` | Lists sickness classes and room assignment configurations. |
-| `POST` | `/api/disease-classes`| `Admin` | Adds or adjusts room threshold occupancy levels. |
-| `POST` | `/api/ml/predict` | `Admin`, `Nurse`, `Triage` | Processes symptom matrix to generate disease classification labels. |
-| `POST` | `/api/result/progress` | `Triage Kiosk` | Submits single-question triage answers from kiosk to web client. |
-| `POST` | `/api/result` | `Triage Kiosk` | Broadcasts final triage outcomes to dashboard. |
-| `GET` | `/api/result/stream` | `Admin`, `Nurse` | SSE endpoint returning real-time triage inputs. |
-| `POST` | `/api/pharmacy/scan` | `Admin`, `Pharmacy` | Captures drug image files for processing. |
-| `GET` | `/api/pharmacy` | `Admin`, `Pharmacy` | Fetches parsed scan queue records. |
-| `POST` | `/api/pharmacy/accept` | `Admin`, `Pharmacy` | Moves verified medicine records into MongoDB collection. |
+| `POST` | `/api/auth/signup` | Auth UI | Registers clinic accounts. Required clinic signup code: `MSH-XXXXXX`. |
+| `POST` | `/api/auth/login` | Auth UI | Authenticates credentials and sets HTTP-only session cookies. |
+| `POST` | `/api/auth/logout` | Session action | Clears cookies and terminates token sessions. |
+| `GET` | `/api/patients` | Admin/Nurse UI | Retrieves clinical records for registered patients. |
+| `POST` | `/api/patients` | Admin/Nurse UI | Creates a new patient record. |
+| `GET` | `/api/disease-classes` | Admin/Nurse/Triage UI | Lists sickness classes and room assignment configurations. |
+| `POST` | `/api/disease-classes` | Admin UI | Adds or adjusts room threshold occupancy levels. |
+| `POST` | `/api/ml/predict` | Triage prediction form | Processes symptom matrix and returns the disease label. |
+| `GET` | `/api/result/stream` | Dashboard EventSource client | SSE stream for live kiosk progress and final results. |
+| `POST` | `/api/result/progress` | `triage_kiosk.py` | Broadcasts live question/answer updates to connected dashboards. |
+| `POST` | `/api/result` | `triage_kiosk.py` | Broadcasts the final kiosk result to connected dashboards. |
+| `POST` | `/api/pharmacy/scan` | Pharmacy Monitor UI | Uploads a medicine image and runs the OCR extraction pipeline. |
+| `GET` | `/api/pharmacy` | Pharmacy Monitor UI | Fetches parsed scan queue records from MongoDB. |
+| `POST` | `/api/pharmacy/accept` | Pharmacy Monitor UI | Moves verified medicine records into the MongoDB collection. |
 
 ---
 
 ## 🤖 AI Components
 
-Trackare utilizes a distributed on-device AI system integrating Machine Learning, Deep Learning OCR, Computer Vision, and Voice Interaction APIs:
+Trackare uses local Python services for triage prediction, pharmacy OCR, kiosk voice interaction, and camera-based presence handling:
 
 ### 1. Triage Symptom Classifier
 * **Core Model**: Random Forest (RF) Ensemble Classifier.
 * **Input Vector**: Array of 25 binary flags `[0, 1]` corresponding to clinical symptoms (e.g. fever, chills, cough, breathlessness).
 * **Storage Artifact**: Serialized python pickle file (`triage_rf_model_v2.pkl`) loaded dynamically using `joblib`.
-* **Execution**: Node.js executes a CLI subprocess wrapper (`predict.py`) that returns prediction classes and holds diagnostic logic.
+* **Execution**: Node.js executes the CLI wrapper (`predict.py`) and returns a JSON prediction payload.
 
-### 2. Deep OCR Medicine Scanner (`ai_pipeline.py`)
-* **Core Model**: EasyOCR Engine (PyTorch-based Deep Learning Text Recognition).
-* **Geometric Label Detection**: Evaluates a weighted geometric surface area calculation ($width \times height \times confidence$) for each bounding box to identify the dominant brand text and filter packaging jargon noise.
-* **OpenCV Image Rotation Pipeline**: If the initial scan fails to identify a date, the image is rotated (90°, 180°, 270°) using OpenCV (`cv2.rotate`) to capture rotated and vertical label blocks.
-* **Semantic Date Disambiguation**: Uses a proximity-based distance algorithm mapping English and French label markers (such as `EXP`, `DLU`, `DLC`, `UAV`, `MFG`, `FAB`) to resolve expiration vs. manufacture date stamps.
+### 2. Pharmacy OCR Pipeline (`pharmacy_scan.py` + `pharmacy.py`)
+* **OCR Provider**: Ollama `glm-ocr` extracts visible text from the uploaded medicine image.
+* **Structured Extraction**: Ollama `llava` converts the OCR text into JSON fields (`drug_name`, `strength`, `expiry_date`).
+* **Image Preprocessing**: `pharmacy.py` uses Pillow to resize, sharpen, and increase contrast before sending the image to Ollama.
+* **Runtime Output**: `pharmacy_scan.py` prints a single JSON object for the Node route, which then stages the scan in the pharmacy UI.
 
 ### 3. Voice Interaction Subsystem (`triage_kiosk.py`)
 * **Speech Synthesis (Text-to-Speech)**: Uses the `pyttsx3` engine for offline text-to-speech voice generation. It runs in a separate process to avoid thread COM/run-loop deadlocks.
@@ -441,6 +450,10 @@ Trackare utilizes a distributed on-device AI system integrating Machine Learning
 * **Core Model**: Haar Cascade Classifiers.
 * **Implementation**: Uses OpenCV (`cv2.CascadeClassifier`) with the pre-trained `haarcascade_frontalface_default.xml` file.
 * **Verification**: Scans the webcam video feed upon ESP32 proximity triggers to confirm patient presence before booting up the voice triage session.
+
+### 5. Kiosk Service Runtime
+* **Framework**: Flask.
+* **Role**: Hosts the local presence endpoint used by the kiosk service on port `5001`.
 
 ---
 

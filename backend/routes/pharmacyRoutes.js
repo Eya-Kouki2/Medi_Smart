@@ -77,7 +77,7 @@ const pythonExecutable = process.env.PYTHON_BIN
         ? path.join(__dirname, '..', '..', '.venv', 'Scripts', 'python.exe')
         : 'python3');
 
-/* ── POST /api/pharmacy/scan ─ Accept an image, run ai_pipeline ── */
+/* ── POST /api/pharmacy/scan ─ Accept an image and run the OCR pipeline ── */
 router.post('/scan', upload.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No image file uploaded' });
 
